@@ -7,6 +7,8 @@ import { Joueur } from './joueur';
 import { Controles } from './controles';
 import { Interface } from './ui';
 import { DIRECTION_SOLEIL as DIR } from './world/ciel';
+import { CARTE, CARTE_PAR_DEFAUT, cartesDisponibles, chargerCarte, installerCarte } from './cartes/chargeur';
+import { chargerMatieres } from './world/matieres';
 
 const canvas = document.getElementById('monde') as HTMLCanvasElement;
 const params = new URLSearchParams(location.search);
@@ -23,20 +25,32 @@ renderer.shadowMap.type = PCFSoftShadowMap;
 renderer.toneMapping = ACESFilmicToneMapping; // couleurs « cinéma », gestion sRGB par défaut
 renderer.toneMappingExposure = 0.3;
 
+// Carte : ?carte=hautvillers (par défaut). Une autre carte (ex. epernay) apparaît dès que son fichier est importé.
+const demandee = params.get('carte') ?? CARTE_PAR_DEFAUT;
+let donnees;
+try { donnees = await chargerCarte(demandee); }
+catch (err) {
+  console.warn(String(err), '— cartes disponibles :', cartesDisponibles());
+  donnees = await chargerCarte(CARTE_PAR_DEFAUT);
+}
+installerCarte(donnees);
+const matieres = await chargerMatieres(Math.min(8, renderer.capabilities.getMaxAnisotropy()));
+
 const scene = new Scene();
-const camera = new PerspectiveCamera(55, 1, 0.5, 1500);
-const monde = construireMonde(scene, renderer, TAILLE_OMBRE);
+const camera = new PerspectiveCamera(55, 1, 0.5, 3500);
+const monde = construireMonde(scene, renderer, donnees, matieres, TAILLE_OMBRE);
 const moisInitial = Math.min(11, Math.max(0, Number(params.get('mois') ?? 0) || 0));
 monde.mois(moisInitial);
 const joueur = new Joueur();
 scene.add(joueur.groupe);
+{ const dep = LIEUX.find((l) => l.id === 'maison') ?? LIEUX[0]; const p = pointArrivee(dep); joueur.placer(p.x, p.z); }
 
 const controles = new Controles(
   document.getElementById('zone-tactile') as HTMLElement,
   document.getElementById('joystick') as HTMLElement,
   document.getElementById('pouce') as HTMLElement,
 );
-controles.yaw = 0; // caméra derrière le personnage, qui regarde vers le nord (coteau)
+controles.yaw = 0; // caméra derrière le personnage, qui regarde vers le nord (coteau et forêt)
 const ui = new Interface(joueur);
 
 const recentrer = (): void => { controles.yaw = Math.atan2(-Math.sin(joueur.cap), -Math.cos(joueur.cap)); };
@@ -48,6 +62,7 @@ function allerA(l: Lieu): void {
   joueur.placer(p.x, p.z);
   joueur.cap = Math.PI;
   recentrer();
+  recaler = true;
   ui.notifier(`Vous voilà : ${l.nom}.`);
 }
 ui.surAller = allerA;
@@ -77,6 +92,7 @@ function lieuProche(): Lieu | null {
 
 let dernier = performance.now();
 let lissee = 0; // cible de caméra lissée
+let recaler = true; // la caméra se cale tout de suite (départ, déplacement rapide)
 let framesFps = 0;
 let tFps = dernier;
 let fps = 0;
@@ -99,8 +115,7 @@ function boucle(now: number): void {
   }
 
   const cible = { x: joueur.x, y: hauteurTerrain(joueur.x, joueur.z) + 1.7, z: joueur.z };
-  lissee += (cible.y - lissee) * Math.min(1, dt * 6) || 0;
-  if (lissee === 0) lissee = cible.y;
+  if (recaler) { lissee = cible.y; recaler = false; } else lissee += (cible.y - lissee) * Math.min(1, dt * 6);
   const d = controles.distance;
   const cp = Math.cos(controles.pitch);
   let cx = cible.x + Math.sin(controles.yaw) * cp * d;
@@ -122,7 +137,7 @@ function boucle(now: number): void {
   monde.soleil.target.position.copy(c);
   monde.soleil.position.copy(c).addScaledVector(DIR, 100);
   monde.soleil.target.updateMatrixWorld();
-  monde.animer(now / 1000);
+  monde.mettreAJour(joueur.x, joueur.z, now);
 
   renderer.render(scene, camera);
 
@@ -130,7 +145,7 @@ function boucle(now: number): void {
   framesFps++;
   if (now - tFps >= 1000) {
     fps = framesFps; framesFps = 0; tFps = now;
-    if (fpsEl) fpsEl.textContent = `${fps} i/s · ${qualite} · échelle ${ratio.toFixed(2)}`;
+    if (fpsEl) fpsEl.textContent = `${fps} i/s · ${qualite} · échelle ${ratio.toFixed(2)} · ${monde.stats()} · ${renderer.info.render.calls} appels`;
     // Qualité adaptative : si le téléphone peine (< 40 i/s), on réduit la résolution ; s'il a de la marge, on la remonte.
     if (!params.has('fixe') && !ui.enPause && now > 4000) {
       const cible = fps < 40 ? Math.max(0.6, ratio - 0.2) : fps >= 58 ? Math.min(Math.min(devicePixelRatio, RATIO_MAX), ratio + 0.1) : ratio;
@@ -148,7 +163,8 @@ document.getElementById('chargement')?.classList.add('fini');
 // Outils pour les tests automatiques (captures d'écran).
 (window as unknown as { __jeu: unknown }).__jeu = {
   allerA: (id: string) => { const l = LIEUX.find((x) => x.id === id); if (l) allerA(l); },
-  etat: () => ({ x: joueur.x, z: joueur.z, fps, pause: ui.enPause }),
+  etat: () => ({ x: joueur.x, z: joueur.z, fps, pause: ui.enPause, carte: CARTE.id }),
+  placer: (x: number, z: number) => { joueur.placer(x, z); },
   mois: (m: number) => monde.mois(m),
   menu: () => ui.ouvrirMenu(),
   carte: () => ui.ouvrirCarte(),

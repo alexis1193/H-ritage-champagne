@@ -15,6 +15,12 @@ Utilisateur : Alexis, non développeur, travaille depuis son téléphone. Expliq
 - **Licences** : chaque modèle 3D / son listé avec sa licence dans `docs/CREDITS.md`.
 - Tous les textes éducatifs sont relus par Alexis avant publication.
 
+## Carte réelle (depuis l'étape 1 bis)
+- Le monde est la **vraie carte de Hautvillers** à l'échelle 1:1 (données IGN, voir `docs/CREDITS.md`), lue dans `src/data/cartes/<id>.json`, produite par `npm run importer -- <id>` à partir de `cartes/<id>.json`. Le jeu ne télécharge aucune donnée en jeu.
+- Lieux du jeu : ids `maison`, `eglise`, `pressoir`, `cave`, `notaire`, `chateau` (fictif), `loge` (fictive), `parcelle1..5`. Aucune vraie marque de champagne : la maison de négoce reste « Delaunay & Fils ».
+- Deuxième carte prévue : Épernay (`cartes/epernay.json`, `?carte=epernay`), mode d'emploi dans `cartes/README.md`.
+- Ne jamais committer `donnees-brutes/` (cache de l'import). Import : réseau limité aux domaines autorisés (data.geopf.fr, ambientcg.com...).
+
 ## Commandes
 - `npm run captures` : captures Playwright (après `npm run build`) dans `captures/`, à regarder une par une. Navigateur préinstallé utilisé via /opt/pw-browsers/chromium (ne pas réinstaller Playwright). Le FPS mesuré en rendu logiciel n est pas représentatif d un téléphone.
 - Options d adresse du jeu : `?debug` (compteur d images/s), `?mois=0..11` (saison), `?qualite=basse|moyenne|haute`, `?fixe` (désactive la qualité adaptative, utilisé par les captures).

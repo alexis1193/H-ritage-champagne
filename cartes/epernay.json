@@ -1,0 +1,9 @@
+{
+  "id": "epernay",
+  "nom": "Épernay",
+  "sousTitre": "Avenue de Champagne (deuxième carte, à importer)",
+  "centre": { "lat": 49.0434, "lon": 3.9594, "note": "À vérifier : centre approximatif de l'avenue de Champagne" },
+  "fenetre": { "ouest": 900, "est": 900, "nord": 700, "sud": 700 },
+  "pasRelief": 5,
+  "parcelles": []
+}

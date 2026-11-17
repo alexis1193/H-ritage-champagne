@@ -8,16 +8,29 @@
 | Three.js (moteur 3D, dont l'objet « Sky » et les outils de fusion de géométries) | MIT | installé par npm |
 | Vite, TypeScript, Vitest, Playwright | MIT / Apache-2.0 | outils de développement, non livrés au joueur |
 
-## Textures
-Toutes les textures actuelles (sol, crépi, pierre, tuiles, ardoises, eau, feuilles de vigne) sont **générées par le programme** (`src/world/textures.ts`). Aucun fichier externe, donc aucune licence à reprendre.
-Si elles sont un jour remplacées par de vraies photos, noter ici chaque fichier avec sa source et sa licence. Sources envisagées, toutes en licence CC0 : ambientCG, Poly Haven.
-
-## Données géographiques (étape « village réel », pas encore faite)
-| Donnée | Source prévue | Licence | Obligation |
+## Données géographiques (carte de Hautvillers)
+| Donnée | Source | Licence | Mention à afficher |
 |---|---|---|---|
-| Relief (altitudes) | IGN, RGE ALTI via la Géoplateforme (data.geopf.fr) | Licence ouverte Etalab 2.0 | mentionner la source et la date |
-| Bâtiments, routes, rivière, parcelles de vigne | OpenStreetMap via Overpass | ODbL | mentionner « © contributeurs OpenStreetMap » ; les données dérivées restent sous ODbL |
-| Limites des parcelles viticoles (si besoin) | Registre parcellaire graphique, data.gouv.fr | Licence ouverte Etalab 2.0 | mentionner la source |
+| Relief (altitudes, pas de 5 m) | IGN, RGE ALTI®, via la Géoplateforme (service WMS, data.geopf.fr) | Licence Ouverte Etalab 2.0 | « Source : IGN, RGE ALTI® » |
+| Bâtiments (contours, hauteurs), routes et chemins, cours d'eau et plans d'eau, zones de vigne et de bois, noms de lieux-dits | IGN, BD TOPO®, via la Géoplateforme (service WFS, data.geopf.fr) | Licence Ouverte Etalab 2.0 | « Source : IGN, BD TOPO® » |
+| Position de l'abbatiale (centre de la carte) | OpenStreetMap, via Nominatim | ODbL 1.0 | « © contributeurs OpenStreetMap » (une seule coordonnée utilisée) |
+
+Les données IGN ont été téléchargées par `scripts/importer-carte.mjs` puis converties dans `src/data/cartes/hautvillers.json` (simplification des contours, projection en mètres). Ce fichier est donc une œuvre dérivée : les mentions ci-dessus doivent figurer dans l'écran « À propos » du jeu (à ajouter) et sur la page de publication.
+
+Note : Overpass (OpenStreetMap) n'a pas pu être utilisé (connexion refusée depuis l'environnement de développement). Si des bâtiments ou des rues OpenStreetMap sont ajoutés plus tard, ils restent sous ODbL (mention obligatoire, partage à l'identique pour la base dérivée).
+
+## Textures photo (ambientCG, licence CC0 : libre, sans obligation, mention appréciée)
+Source : https://ambientcg.com — chaque matière, couleur + relief (normales), réduite à 512 px (`public/textures/`).
+| Fichier | Matière ambientCG | Usage |
+|---|---|---|
+| platre*.jpg | Plaster002 | murs, et grain de la craie au sol |
+| tuile*.jpg | RoofingTiles014A | toits de tuiles |
+| ardoise*.jpg | RoofingTiles001 | toits d'ardoise |
+| pierre*.jpg | Rocks011 | pierre (abbatiale, soubassements) |
+| asphalte*.jpg | Asphalt031 | routes |
+| herbe*.jpg | Grass004 | herbe |
+
+Textures générées par le programme (aucune licence à reprendre) : relief de l'eau et feuilles de vigne (`src/world/textures.ts`).
 
 ## Modèles 3D et sons
 Aucun pour l'instant (étape 7).

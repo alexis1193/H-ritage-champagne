@@ -35,7 +35,7 @@ try {
       await page.waitForTimeout(500);
       await page.mouse.up();
 
-      for (const lieu of ['eglise', 'chateau', 'crayeres']) {
+      for (const lieu of ['eglise', 'chateau', 'parcelle1']) {
         await page.evaluate((id) => window.__jeu.allerA(id), lieu);
         await page.waitForTimeout(500);
         await page.screenshot({ path: p(`3-${lieu}`) });
@@ -47,7 +47,7 @@ try {
       await page.waitForTimeout(250);
       await page.screenshot({ path: p('5-carte') });
       await page.evaluate(() => window.__jeu.fermer());
-      for (const [mois, nomMois, lieu] of [[5, 'ete', 'mont_benoit'], [8, 'septembre', 'crayeres'], [9, 'automne', 'hautes_vignes']]) {
+      for (const [mois, nomMois, lieu] of [[5, 'ete', 'parcelle2'], [8, 'septembre', 'parcelle1'], [9, 'automne', 'parcelle4']]) {
         await page.evaluate(([m, l]) => { window.__jeu.mois(m); window.__jeu.allerA(l); }, [mois, lieu]);
         await page.waitForTimeout(600);
         await page.screenshot({ path: p(`6-${nomMois}`) });

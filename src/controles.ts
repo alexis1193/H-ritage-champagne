@@ -5,8 +5,8 @@
  */
 export class Controles {
   yaw = 0;
-  pitch = 0.72;
-  distance = 36;
+  pitch = 0.8;
+  distance = 60;
   /** Vecteur du joystick : x vers la droite, y vers l'avant (-1 à 1). */
   entree = { x: 0, y: 0 };
   actif = true;
@@ -46,7 +46,7 @@ export class Controles {
   }
 
   private zoomer(delta: number): void {
-    this.distance = Math.min(80, Math.max(10, this.distance + delta));
+    this.distance = Math.min(260, Math.max(10, this.distance + delta));
   }
 
   private dansZoneJoystick(x: number, y: number): boolean {

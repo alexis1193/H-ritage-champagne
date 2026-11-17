@@ -38,24 +38,30 @@ Objectifs de performance : 30 images par seconde minimum sur un téléphone Andr
 
 ## Univers, carte et graphismes
 
-Le jeu se passe à Saint-Aubin-les-Craies, un village fictif de la vallée de la Marne. Le joueur doit reconnaître la Champagne au premier coup d'œil : coteaux exposés plein sud couverts de rangs de vigne, forêt au sommet, craie blanche dans les chemins, clocher d'ardoise, la Marne en contrebas.
+Le jeu se passe à **Hautvillers** (Marne), le village de l'abbaye où l'on associe le nom de Dom Pérignon, sur les coteaux de la vallée de la Marne, près d'Épernay. La carte est **réelle** : relief (IGN RGE ALTI), bâtiments, routes, cours d'eau, vignes et bois (IGN BD TOPO) à l'échelle 1:1, de la forêt domaniale au nord jusqu'à la Marne et au canal latéral, à environ un kilomètre au sud. Le joueur doit reconnaître la Champagne au premier coup d'œil : coteaux couverts de rangs de vigne qui suivent les courbes de niveau, forêt au sommet, craie blanche dans les chemins, clocher d'ardoise, la Marne en contrebas. Voir `docs/CREDITS.md` pour les sources.
+
+Ce qui est réel : le village, les rues, les bâtiments (formes et hauteurs), les vignes et les bois, la Marne, l'abbatiale, les noms des lieux-dits. Ce qui est inventé : le jeu lui-même (parcelles du joueur, maison familiale, pressoir, cave, notaire), la Maison Delaunay & Fils (maison de négoce fictive, aucune vraie marque) et la loge de vigne. Les cinq parcelles du joueur sont posées sur de vraies zones de vigne près du village ; elles prennent le nom du lieu-dit réel le plus proche, mais leur emplacement exact est approximatif et ne correspond à aucune vraie exploitation.
 
 | Lieu | Rôle dans le jeu | Moments forts |
 | --- | --- | --- |
-| Maison familiale | Bureau : clients, prix public, marque, chef de culture, missions | Toute l'année |
-| Les Crayères (0,7 ha, chardonnay) | Parcelle héritée | Taille à vendanges |
-| Le Mont Benoît (0,8 ha, pinot noir) | Parcelle héritée | Taille à vendanges |
-| Les Hautes Vignes (0,5 ha, meunier) | Parcelle héritée | Taille à vendanges |
-| Les Longues Raies (1 ha, pinot noir) | Parcelle à louer en fermage | Dès l'an 1 |
-| Le Clos du Moulin (0,6 ha, chardonnay) | Parcelle à acheter | Fin de partie |
-| Pressoir | Pressurage, vente des raisins au négoce | Septembre, octobre |
-| Cave et cuverie (dans la craie) | Vins clairs, assemblage, tirage, lattes, dégorgement | Toute l'année |
-| Maison Delaunay & Fils (château) | Grande maison : contrat raisins, rachat sur lattes | Toute l'année |
-| Notaire et banque | Emprunts, fermage, achat de vignes, succession, bilan | Toute l'année |
-| Église Saint-Vincent | Histoire et culture : Dom Pérignon, saint Vincent, la craie | Janvier (fête) |
-| Loge de vigne | Petite cabane dans les vignes, point de vue et quiz | Toute l'année |
+| Maison familiale | Bureau : clients, prix public, marque, chef de culture, missions (un bâtiment du village, près de la Cour Saint-Vincent) | Toute l'année |
+| Les Prières (0,7 ha, chardonnay) | Parcelle héritée | Taille à vendanges |
+| Les Crémonts (0,8 ha, pinot noir) | Parcelle héritée | Taille à vendanges |
+| Les Vorivals (0,5 ha, meunier) | Parcelle héritée | Taille à vendanges |
+| Les Sellettes (1 ha, pinot noir) | Parcelle à louer en fermage | Dès l'an 1 |
+| Les Côtes à Bras (0,6 ha, chardonnay) | Parcelle à acheter | Fin de partie |
+| Pressoir | Pressurage, vente des raisins au négoce (un bâtiment agricole du village) | Septembre, octobre |
+| Cave et cuverie | Vins clairs, assemblage, tirage, lattes, dégorgement (au pied de la forêt, près de l'abbaye) | Toute l'année |
+| Maison Delaunay & Fils (château, fictif) | Grande maison de négoce : contrat raisins, rachat sur lattes | Toute l'année |
+| Notaire et banque | Emprunts, fermage, achat de vignes, succession, bilan (près de la Place de la République) | Toute l'année |
+| Église abbatiale Saint-Sindulphe | Histoire et culture : Dom Pérignon, saint Vincent, la craie | Janvier (fête de la Saint-Vincent) |
+| Loge de vigne (fictive) | Petite cabane dans les vignes, point de vue et quiz | Toute l'année |
 
-**Style graphique** : low-poly chaleureux et soigné, lumière douce, ombres, brume légère au loin. Pas de réalisme photo : c'est hors de portée d'un navigateur de téléphone, mais un beau low-poly bien éclairé donne l'impression d'y être.
+Autres lieux réels repérables : Place de la République, Cour Saint-Vincent, mairie, parc de l'abbaye, forêt domaniale de Hautvillers, la Marne et le canal latéral à la Marne.
+
+**Deuxième carte prévue : Épernay et l'avenue de Champagne.** Le jeu lit n'importe quelle carte importée (`?carte=epernay`). Pour l'ajouter : renseigner `cartes/epernay.json`, lancer `npm run importer -- epernay`, puis placer les lieux (voir `cartes/README.md`).
+
+**Style graphique** : réalisme stylisé et chaleureux : vrais volumes de la carte réelle, textures photo (crépi, tuiles, ardoise, pierre, herbe), ciel réaliste, lumière douce, ombres douces, brume légère au loin. Pas de réalisme photo intégral : il reste adapté au navigateur d'un téléphone (qualité adaptative, ombres et définition réduites sur écran tactile).
 
 **Saisons visibles** : vigne nue et sol pâle en hiver, givre les matins de gel, jeunes feuilles vert clair en avril, haies vertes en été, grappes vertes puis noires ou dorées, cueilleurs dans les rangs en septembre, feuilles jaunes et rousses en octobre et novembre. Pluie, orage et grêle s'affichent quand ils arrivent.
 
@@ -186,7 +192,7 @@ Le jeu doit être serré les deux premières années, puis récompenser le joueu
 | --- | --- |
 | Rémunération du joueur | 2 000 € par mois |
 | Chef de culture (+6 jours par mois) | 3 200 € par mois |
-| Fermage des Longues Raies | 14 000 € par an |
+| Fermage des Sellettes | 14 000 € par an |
 | Emprunt | 4,5 % par an, 10 % du capital remboursé par an, plafond 120 000 € + 300 000 € par ha possédé |
 | Impôts et cotisations | 25 % du résultat annuel positif |
 | Marque (statut RM) | 9 000 € |
@@ -197,7 +203,7 @@ Le jeu doit être serré les deux premières années, puis récompenser le joueu
 | Cuverie +5 000 L | 20 000 € |
 | Cave +10 000 bouteilles | 35 000 € |
 | Gyropalettes | 25 000 € |
-| Clos du Moulin (0,6 ha) | 680 000 € |
+| Les Côtes à Bras (0,6 ha) | 680 000 € |
 
 ### Météo
 
@@ -256,8 +262,8 @@ Le joueur apprend en faisant : chaque action débloque une page du « Carnet du 
 | Le dosage | Les 7 mentions et leurs grammes de sucre | Premier dégorgement |
 | Les lettres de l'étiquette | RM, NM, CM, RC | Création de la marque |
 | Vignerons et maisons | Les vignerons possèdent l'essentiel du vignoble, les maisons vendent la majorité des bouteilles | Visite du château |
-| Dom Pérignon | Il n'a pas inventé le champagne ; assemblage et pressurage | Visite de l'église |
-| Saint Vincent | Patron des vignerons, fêté vers le 22 janvier | Visite de l'église |
+| Dom Pérignon | Il n'a pas inventé le champagne ; assemblage et pressurage | Visite de l'abbatiale |
+| Saint Vincent | Patron des vignerons, fêté vers le 22 janvier | Visite de l'abbatiale |
 | La craie | Réserve d'eau pour la vigne ; les crayères servent de caves | Agrandissement de la cave |
 | Grands et premiers crus | Surface de l'appellation, villages classés | Création de la marque |
 | Gel, floraison, ban des vendanges | Risques et calendrier fixé par la filière | Événements météo |
@@ -266,8 +272,8 @@ Le joueur apprend en faisant : chaque action débloque une page du « Carnet du 
 ### Missions
 
 1. Tailler tes trois parcelles avant fin mars.
-2. Visiter l'église du village.
-3. Rencontrer la Maison Delaunay au château.
+2. Visiter l'abbatiale d'Hautvillers.
+3. Rencontrer la Maison Delaunay au château (maison fictive).
 4. Assembler et tirer la cuvée de ton père.
 5. Réussir ta première vendange.
 6. Presser tes propres raisins.

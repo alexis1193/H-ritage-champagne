@@ -1,13 +1,12 @@
 import { BoxGeometry, CylinderGeometry, Group, Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
 import { BORNES, hauteurTerrain } from './world/terrain';
-
-export interface Obstacle { x: number; z: number; r: number }
+import type { Obstacles } from './world/collision';
 
 /** Personnage jouable (forme simple, remplacée par un vrai modèle animé à l'étape 7). */
 export class Joueur {
   readonly groupe = new Group();
-  x = -4;
-  z = 20;
+  x = 0;
+  z = 0;
   cap = Math.PI; // direction regardée (0 = vers le sud, π = vers le nord)
   private temps = 0;
   private enMarche = false;
@@ -34,7 +33,7 @@ export class Joueur {
   }
 
   /** dx, dz : direction voulue (norme 0 à 1). */
-  mettreAJour(dt: number, dx: number, dz: number, obstacles: Obstacle[]): void {
+  mettreAJour(dt: number, dx: number, dz: number, obstacles: Obstacles): void {
     const force = Math.hypot(dx, dz);
     this.enMarche = force > 0.05;
     if (this.enMarche) {
@@ -46,15 +45,10 @@ export class Joueur {
       this.cap += diff * Math.min(1, dt * 12);
       this.temps += dt * (6 + force * 6);
     }
-    for (const o of obstacles) {
-      const ox = this.x - o.x;
-      const oz = this.z - o.z;
-      const d = Math.hypot(ox, oz);
-      const min = o.r + 0.6;
-      if (d < min && d > 0.0001) { this.x = o.x + (ox / d) * min; this.z = o.z + (oz / d) * min; }
-    }
-    this.x = Math.min(BORNES.maxX - 5, Math.max(BORNES.minX + 5, this.x));
-    this.z = Math.min(47, Math.max(BORNES.minZ + 5, this.z)); // la Marne n'est pas traversable
+    const p = { x: this.x, z: this.z };
+    obstacles.resoudre(p);
+    this.x = Math.min(BORNES.maxX - 5, Math.max(BORNES.minX + 5, p.x));
+    this.z = Math.min(BORNES.maxZ - 5, Math.max(BORNES.minZ + 5, p.z));
     this.groupe.position.set(this.x, hauteurTerrain(this.x, this.z) + (this.enMarche ? Math.abs(Math.sin(this.temps)) * 0.12 : 0), this.z);
     this.groupe.rotation.y = this.cap;
   }

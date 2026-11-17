@@ -3,11 +3,7 @@ import {
   SRGBColorSpace, UnsignedByteType,
 } from 'three';
 
-/**
- * Textures générées par le programme (aucun fichier à télécharger) :
- * une image de couleur (clarté) + une carte de relief (normales) pour chaque matière.
- * Elles pourront être remplacées par de vraies photos libres de droits (ambientCG, Poly Haven).
- */
+/** Textures générées par le programme : relief de l'eau et feuilles de vigne. Les matières des murs, toits et sols sont de vraies photos (voir matieres.ts). */
 
 function hasard(graine: number): () => number {
   let s = graine | 0;
@@ -71,94 +67,7 @@ export function normalesDepuis(h: Float32Array, taille: number, force: number): 
   return donnees(taille, data, false);
 }
 
-/** Image de clarté (gris) : se teinte ensuite avec la couleur du matériau. */
-export function grisDepuis(a: Float32Array, taille: number): DataTexture {
-  const data = new Uint8Array(taille * taille * 4);
-  for (let i = 0; i < a.length; i++) {
-    const v = Math.max(0, Math.min(1, a[i])) * 255;
-    data[i * 4] = v; data[i * 4 + 1] = v; data[i * 4 + 2] = v; data[i * 4 + 3] = 255;
-  }
-  return donnees(taille, data, true);
-}
-
-export interface Matiere { couleur: DataTexture; relief: DataTexture }
-
 const T = 256;
-const hash2 = (a: number, b: number): number => {
-  let h = (a * 374761393 + b * 668265263) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-};
-
-/** Sol : grain fin utilisé sur toute la surface du terrain. */
-export function matiereSol(): Matiere {
-  const h = bruitPeriodique(T, [8, 16, 32, 64], [1, 0.8, 0.6, 0.5], 11);
-  return { couleur: grisDepuis(h, T), relief: normalesDepuis(h, T, 5) };
-}
-
-/** Crépi / plâtre des murs. */
-export function matierePlatre(): Matiere {
-  const h = bruitPeriodique(T, [16, 32, 64, 128], [0.6, 1, 0.8, 0.5], 21);
-  const taches = bruitPeriodique(T, [3, 6], [1, 0.6], 22);
-  const a = new Float32Array(T * T);
-  for (let i = 0; i < a.length; i++) a[i] = 0.82 + 0.18 * h[i] - 0.14 * Math.max(0, taches[i] - 0.55);
-  return { couleur: grisDepuis(a, T), relief: normalesDepuis(h, T, 2) };
-}
-
-/** Pierre de taille / soubassement. */
-export function matierePierre(): Matiere {
-  const h = new Float32Array(T * T); const a = new Float32Array(T * T);
-  const bruit = bruitPeriodique(T, [16, 48], [1, 0.7], 31);
-  const bh = 32;
-  for (let y = 0; y < T; y++) {
-    const rang = Math.floor(y / bh); const off = (rang % 2) * 32; const bw = 64;
-    for (let x = 0; x < T; x++) {
-      const xx = (x + off) % T; const fx = (xx % bw) / bw; const fy = (y % bh) / bh;
-      const bloc = Math.floor(xx / bw) + rang * 7;
-      const joint = Math.min(fx, 1 - fx) < 0.03 || Math.min(fy, 1 - fy) < 0.05;
-      const i = y * T + x;
-      h[i] = joint ? 0.25 : 0.6 + 0.4 * bruit[i];
-      a[i] = joint ? 0.55 : 0.7 + 0.15 * hash2(bloc, 3) + 0.12 * (bruit[i] - 0.5);
-    }
-  }
-  return { couleur: grisDepuis(a, T), relief: normalesDepuis(h, T, 4) };
-}
-
-/** Tuiles canal / mécaniques : rangs décalés. */
-export function matiereTuiles(): Matiere {
-  const h = new Float32Array(T * T); const a = new Float32Array(T * T);
-  const bruit = bruitPeriodique(T, [32, 64], [1, 0.6], 41);
-  const rang = 32; const larg = 32;
-  for (let y = 0; y < T; y++) {
-    const r = Math.floor(y / rang); const off = (r % 2) * (larg / 2); const fy = (y % rang) / rang;
-    for (let x = 0; x < T; x++) {
-      const xx = (x + off) % T; const fx = (xx % larg) / larg; const id = Math.floor(xx / larg) + r * 13;
-      const i = y * T + x;
-      const bord = fx < 0.05 || fx > 0.95 || fy > 0.93;
-      h[i] = bord ? 0 : Math.sin(Math.PI * fx) * 0.6 + 0.4 * fy;
-      a[i] = bord ? 0.3 : 0.72 + 0.25 * hash2(id, 9) + 0.1 * (bruit[i] - 0.5) - 0.12 * (1 - fy) * (1 - fy);
-    }
-  }
-  return { couleur: grisDepuis(a, T), relief: normalesDepuis(h, T, 5) };
-}
-
-/** Ardoises : petits rectangles décalés. */
-export function matiereArdoise(): Matiere {
-  const h = new Float32Array(T * T); const a = new Float32Array(T * T);
-  const bruit = bruitPeriodique(T, [32, 96], [1, 0.5], 51);
-  const rang = 20; const larg = 36;
-  for (let y = 0; y < T; y++) {
-    const r = Math.floor(y / rang); const off = (r % 2) * (larg / 2); const fy = (y % rang) / rang;
-    for (let x = 0; x < T; x++) {
-      const xx = (x + off) % T; const fx = (xx % larg) / larg; const id = Math.floor(xx / larg) + r * 17;
-      const i = y * T + x;
-      const bord = fx < 0.04 || fx > 0.96 || fy > 0.9;
-      h[i] = bord ? 0 : 0.5 + 0.5 * fy;
-      a[i] = bord ? 0.3 : 0.7 + 0.25 * hash2(id, 5) + 0.08 * (bruit[i] - 0.5);
-    }
-  }
-  return { couleur: grisDepuis(a, T), relief: normalesDepuis(h, T, 4) };
-}
 
 /** Relief de l'eau (vaguelettes). */
 export function reliefEau(): DataTexture {

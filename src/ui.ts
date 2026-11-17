@@ -1,5 +1,6 @@
 import { LIEUX, pointArrivee, type Lieu } from './world/lieux';
 import { dessinerCarte } from './minicarte';
+import { CARTE } from './cartes/chargeur';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const e = document.getElementById(id);
@@ -36,6 +37,8 @@ export class Interface {
       b.addEventListener('click', () => { this.fermerTout(); this.surAller?.(l); });
       liste.appendChild(b);
     }
+    const titre = document.querySelector('#carte h2');
+    if (titre) titre.textContent = `${CARTE.nom} (${CARTE.sousTitre.split(',')[0]})`;
     this.mettreAJourMini();
   }
 
@@ -79,7 +82,7 @@ export class Interface {
     this.ouvrir();
     this.carte.hidden = false;
     const paysage = window.innerWidth > window.innerHeight;
-    const w = paysage ? Math.min(window.innerWidth * 0.55, (window.innerHeight - 70) * 1.5) : window.innerWidth - 28;
+    const w = paysage ? Math.min(window.innerWidth * 0.45, (window.innerHeight - 70) * 0.78) : Math.min(window.innerWidth - 28, (window.innerHeight * 0.55) * 0.78);
     dessinerCarte(this.carteCanvas, this.joueur, Math.max(220, w));
   }
 
@@ -90,7 +93,7 @@ export class Interface {
   }
 
   mettreAJourMini(): void {
-    dessinerCarte(this.mini, this.joueur, Math.round(Math.min(130, window.innerWidth * 0.3)));
+    dessinerCarte(this.mini, this.joueur, Math.round(Math.min(96, window.innerWidth * 0.26)));
   }
 
   /** Affiche le bouton d'action quand le joueur est près d'un lieu. */

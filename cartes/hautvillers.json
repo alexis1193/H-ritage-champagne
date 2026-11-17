@@ -1,0 +1,84 @@
+{
+  "id": "hautvillers",
+  "nom": "Hautvillers",
+  "sousTitre": "Marne, coteaux de la vallée de la Marne",
+  "centre": {
+    "lat": 49.0819451,
+    "lon": 3.9411934,
+    "note": "Église abbatiale (OpenStreetMap : Église Saint-Pierre, rue de l'Abbaye)"
+  },
+  "fenetre": {
+    "ouest": 600,
+    "est": 900,
+    "nord": 650,
+    "sud": 1250
+  },
+  "pasRelief": 5,
+  "parcelles": [
+    {
+      "id": "parcelle1",
+      "cepage": "chardonnay",
+      "ha": 0.7,
+      "role": "héritée"
+    },
+    {
+      "id": "parcelle2",
+      "cepage": "pinot noir",
+      "ha": 0.8,
+      "role": "héritée"
+    },
+    {
+      "id": "parcelle3",
+      "cepage": "meunier",
+      "ha": 0.5,
+      "role": "héritée"
+    },
+    {
+      "id": "parcelle4",
+      "cepage": "pinot noir",
+      "ha": 1.0,
+      "role": "fermage"
+    },
+    {
+      "id": "parcelle5",
+      "cepage": "chardonnay",
+      "ha": 0.6,
+      "role": "à acheter"
+    }
+  ],
+  "cibles": {
+    "maison": [
+      330,
+      -70
+    ],
+    "notaire": [
+      270,
+      -140
+    ],
+    "pressoir": [
+      230,
+      -30
+    ],
+    "cave": [
+      40,
+      40
+    ],
+    "chateau": [
+      340,
+      90
+    ],
+    "cibleParcelles": [
+      273,
+      -138
+    ]
+  },
+  "nomsParcelles": [
+    "les Crémonts",
+    "les Prières",
+    "les Sellettes",
+    "les Côtes à Bras",
+    "les Vorivals",
+    "la Cave Thomas",
+    "les Barilliers"
+  ]
+}
