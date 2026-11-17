@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Héritage en Champagne 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Verre de bouteille, or du muselet, ivoire de l'étiquette. Layout : monde 3D plein écran, HUD discret, panneaux en tiroir. */
+  --bottle:#0e241e;
+  --bottle-2:#163830;
+  --line:#2f574b;
+  --ivory:#f3ecd9;
+  --muted:#b3c3b7;
+  --gold:#d9b75e;
+  --good:#8ad6a4;
+  --bad:#f08e78;
+  --display:"Fraunces", Georgia, serif;
+  --body:"Work Sans", "Segoe UI", Roboto, system-ui, sans-serif;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bottle);color:var(--ivory);font-family:var(--body);font-size:15px;line-height:1.45}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;border:1px solid var(--gold);background:var(--bottle);color:var(--gold);padding:9px 12px;min-height:42px}
+button.primary{background:var(--gold);color:var(--bottle)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ivory);outline-offset:2px}
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;padding:calc(8px + env(safe-area-inset-top)) 10px 0;pointer-events:none;z-index:5}
+.hudrow{display:flex;gap:8px;justify-content:space-between;align-items:flex-start}
+.pill{pointer-events:auto;background:rgba(14,36,30,.88);border:1px solid var(--line);border-radius:10px;padding:6px 10px;backdrop-filter:blur(4px)}
+.pill b{display:block;font-family:var(--display);font-size:1.05rem;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1.2}
+.pill span{display:block;font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.hudbtns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;pointer-events:auto}
+.hudbtns button{min-height:36px;padding:6px 10px;font-size:.82rem;background:rgba(14,36,30,.88)}
+.hudbtns button.primary{background:var(--gold)}
+#hint{margin-top:8px;font-size:.8rem;max-width:420px;pointer-events:none}
+#hint:empty{display:none}
+/* joystick */
+#joy{position:fixed;left:calc(18px + env(safe-area-inset-left));bottom:calc(22px + env(safe-area-inset-bottom));width:124px;height:124px;border-radius:50%;background:rgba(14,36,30,.45);border:2px solid rgba(217,183,94,.55);z-index:4;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(217,183,94,.85);pointer-events:none}
+#act{position:fixed;right:calc(16px + env(safe-area-inset-right));bottom:calc(40px + env(safe-area-inset-bottom));z-index:4;max-width:58vw;font-size:.95rem;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+#act[hidden]{display:none}
+/* tiroir */
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;max-height:86%;display:flex;flex-direction:column;background:var(--bottle);border-top:1px solid var(--gold);border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.4)}
+#sheet[hidden]{display:none}
+@media (min-width:860px){#sheet{left:auto;top:0;bottom:0;width:440px;max-height:none;border-radius:0;border-top:0;border-left:1px solid var(--gold)}}
+#sheet header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+#sheet h2{font-family:var(--display);font-size:1.3rem;margin:0;color:var(--gold);text-wrap:balance}
+#sBody{overflow-y:auto;padding:12px 16px calc(24px + env(safe-area-inset-bottom));display:grid;gap:12px;-webkit-overflow-scrolling:touch}
+h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--gold);margin:10px 0 0;font-weight:600}
+.card{background:var(--bottle-2);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:9px}
+.card h4{margin:0;font-size:.98rem;line-height:1.3}
+.card p,.muted{margin:0;color:var(--muted);font-size:.88rem}
+.card.done{opacity:.7}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.price{color:var(--gold);font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.ok{color:var(--good);border-color:var(--good)}
+.chip.warn{color:var(--bad);border-color:var(--bad)}
+.chip.gold{color:var(--gold);border-color:var(--gold)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns button{flex:1 1 130px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:.88rem;font-variant-numeric:tabular-nums;align-items:baseline}
+.kv span:nth-child(even){text-align:right}
+.kv .pos{color:var(--good)} .kv .neg{color:var(--bad)}
+.kv .tot{border-top:1px solid var(--line);padding-top:5px;font-weight:600}
+label.f{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
+label.f em{font-style:normal;color:var(--ivory);font-weight:600;font-variant-numeric:tabular-nums}
+select,input[type=text]{font:inherit;width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bottle);color:var(--ivory)}
+input[type=range]{width:100%;accent-color:var(--gold);height:30px;margin:0}
+.fact{border-left:4px solid var(--gold)}
+.fact h4{color:var(--gold)}
+.warnbox{border-left:4px solid var(--bad)}
+.goodbox{border-left:4px solid var(--good)}
+table{width:100%;border-collapse:collapse;font-size:.84rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td.n,th.n{text-align:right}
+.tbl{overflow-x:auto}
+ul.news{margin:0;padding-left:18px;display:grid;gap:5px;font-size:.9rem}
+/* intro */
+#intro{position:fixed;inset:0;z-index:20;overflow-y:auto;background:linear-gradient(180deg,rgba(14,36,30,.92),rgba(14,36,30,.98));padding:calc(28px + env(safe-area-inset-top)) 18px 40px}
+#intro[hidden]{display:none}
+#intro .in{max-width:560px;margin:0 auto;display:grid;gap:14px}
+#intro h1{font-family:var(--display);font-size:2.2rem;line-height:1.1;margin:0;color:var(--gold);text-wrap:balance}
+#intro p{margin:0;max-width:62ch}
+#intro ul{margin:0;padding-left:18px;color:var(--muted);font-size:.9rem;display:grid;gap:4px}
+/* carnet */
+#fact{position:fixed;left:50%;top:calc(90px + env(safe-area-inset-top));transform:translateX(-50%);width:min(440px,calc(100% - 24px));z-index:30;background:var(--ivory);color:var(--bottle);border-radius:12px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:grid;gap:8px}
+#fact[hidden]{display:none}
+#fact small{text-transform:uppercase;letter-spacing:.08em;font-size:.68rem;font-weight:600;color:#6b5a22}
+#fact h4{margin:0;font-family:var(--display);font-size:1.1rem}
+#fact p{margin:0;font-size:.92rem}
+#fact button{justify-self:end;background:var(--bottle);color:var(--gold);border-color:var(--bottle)}
+#toast{position:fixed;left:50%;bottom:calc(170px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ivory);color:var(--bottle);padding:9px 14px;border-radius:8px;font-weight:600;font-size:.88rem;z-index:40;max-width:calc(100% - 32px);text-align:center}
+#toast[hidden]{display:none}
+#load{position:fixed;inset:0;display:grid;place-items:center;z-index:50;background:var(--bottle);color:var(--gold);font-family:var(--display);font-size:1.2rem}
+#load[hidden]{display:none}
+svg.map{width:100%;height:auto;background:#6f8f4c;border-radius:10px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud" hidden>
+  <div class="hudrow">
+    <div class="pill"><b id="hDate"></b><span id="hDays"></span></div>
+    <div class="pill" style="text-align:right"><b id="hCash"></b><span id="hRep"></span></div>
+  </div>
+  <div class="hudbtns">
+    <button data-ui="carte">Carte</button>
+    <button data-ui="missions">Missions</button>
+    <button data-ui="carnet">Carnet</button>
+    <button data-ui="fin" class="primary">Fin du mois</button>
+  </div>
+  <div id="hint" class="pill"></div>
+</div>
+<div id="joy" hidden><div id="knob"></div></div>
+<button id="act" class="primary" hidden></button>
+<div id="sheet" hidden role="dialog" aria-labelledby="sTitle"><header><h2 id="sTitle"></h2><button id="sClose">Fermer</button></header><div id="sBody"></div></div>
+<div id="fact" hidden role="status"><small>Nouveau dans ton carnet</small><h4 id="fT"></h4><p id="fP"></p><button id="fOk">Compris</button></div>
+<div id="toast" hidden></div>
+<div id="load">Chargement du vignoble…</div>
+<div id="intro" hidden><div class="in">
+  <h1>Héritage en Champagne</h1>
+  <p>Tes parents ont cultivé 2 hectares sur les coteaux de Saint-Aubin-les-Craies, un village de la vallée de la Marne. Pendant trente ans, chaque vendange est partie au pressoir de la Maison Delaunay &amp; Fils, payée au kilo.</p>
+  <p>Ils te transmettent trois parcelles (chardonnay, pinot noir, meunier), 600 bouteilles faites à la coopérative, 3 000 litres de vins clairs que ton père gardait pour tenter sa propre cuvée… et 75 000 € de droits de succession à payer sur trois ans.</p>
+  <p>À toi de faire du domaine une vraie maison de champagne, mois après mois : tailler, soigner, vendanger, presser, assembler, attendre, dégorger, vendre.</p>
+  <div class="card">
+    <label class="f" for="house">Nom de ta maison<input type="text" id="house" value="Champagne des Coteaux" maxlength="36" autocomplete="off"></label>
+    <div class="btns"><button class="primary" id="bStart">Reprendre le domaine</button><button id="bCont" hidden></button></div>
+  </div>
+  <ul>
+    <li>Déplace-toi avec le joystick, ou les touches ZQSD / WASD / flèches.</li>
+    <li>Glisse sur l'écran pour tourner la caméra, pince ou molette pour zoomer.</li>
+    <li>Approche-toi d'un cercle doré pour agir : parcelles, pressoir, cave, maison, château, notaire.</li>
+    <li>Le bouton Carte te déplace rapidement. Chaque mois, tu as 10 jours de travail.</li>
+  </ul>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ================= utilitaires ================= */
+const $=s=>document.querySelector(s);
+const eur=n=>new Intl.NumberFormat("fr-BE",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(Math.round(n));
+const eur2=n=>(Math.round(n*100)/100).toFixed(2).replace(".",",")+" €";
+const num=n=>new Intl.NumberFormat("fr-BE").format(Math.round(n));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=(a,b)=>Math.floor(rnd(a,b+1));
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const Mois=m=>MOIS[m][0].toUpperCase()+MOIS[m].slice(1);
+const CEP={PN:"Pinot noir",PM:"Meunier",CH:"Chardonnay"};
+const TYPE={BSA:"Brut sans année",BDB:"Blanc de blancs",ROSE:"Rosé",MIL:"Millésimé"};
+const TMULT={BSA:1,BDB:1.1,ROSE:1.15,MIL:1.35};
+const DOS=[["Brut nature","moins de 3 g/L"],["Extra brut","0 à 6 g/L"],["Brut","moins de 12 g/L"],["Extra dry","12 à 17 g/L"],["Sec","17 à 32 g/L"],["Demi-sec","32 à 50 g/L"],["Doux","plus de 50 g/L"]];
+const DAYS=10,LIVING_M=2000,CHEF_M=3200,RATE=0.045,SUCC=25000,KEY="heritage-champagne-3d-v1";
+
+/* ================= contenu éducatif ================= */
+const FACTS={
+  taille:["La taille","En Champagne, quatre systèmes de taille sont autorisés : Chablis, Cordon de Royat, Guyot et Vallée de la Marne. La taille limite le nombre de bourgeons, donc le rendement et la concentration des raisins."],
+  tailleMatch:["La bonne taille pour le bon cépage","Le Cordon de Royat est le plus répandu, surtout pour le pinot noir. La taille Chablis est très utilisée pour le chardonnay, notamment en Côte des Blancs. La taille Vallée de la Marne est réservée au meunier."],
+  tailleVM:["Une règle du cahier des charges","La taille Vallée de la Marne n'est autorisée que pour le meunier. Le cahier des charges de l'appellation encadre chaque geste du vigneron."],
+  liage:["Le liage","Après la taille, les baguettes sont attachées au fil porteur. Elles guideront la future végétation le long du rang."],
+  ebour:["L'ébourgeonnage","En mai, on retire les pousses mal placées ou en surnombre. La souche respire mieux, souffre moins des maladies, et la sève se concentre sur les bonnes grappes."],
+  pal:["Le palissage","Les rameaux sont relevés entre des fils doubles. Les feuilles captent mieux le soleil et l'air circule, ce qui limite les maladies."],
+  rog:["Le rognage","On coupe le bout des rameaux qui dépassent des fils, pour que la vigne nourrisse ses grappes plutôt que ses feuilles."],
+  trait:["Mildiou et oïdium","Le mildiou aime la chaleur humide, l'oïdium la chaleur sèche. Ce sont les deux grandes maladies de la vigne : une parcelle mal surveillée peut perdre une grosse partie de sa récolte."],
+  vend:["La vendange à la main","En Champagne, la vendange est obligatoirement manuelle. Les grappes doivent arriver entières au pressoir, pour que le jus des raisins noirs reste blanc."],
+  labour:["Le travail du sol","Les vignerons labourent ou enherbent de plus en plus leurs vignes plutôt que de désherber chimiquement. Le buttage protège le pied des souches du froid."],
+  pressurage:["Le marc de 4 000 kg","4 000 kg de raisins forment un « marc ». On en tire au maximum 2 550 litres : 2 050 litres de cuvée, les jus les plus fins, puis 500 litres de taille, plus fruités et plus marqués."],
+  debourbage:["Le débourbage","Avant la fermentation, on laisse reposer le moût 12 à 24 heures pour séparer le jus clair des bourbes."],
+  malo:["La fermentation malolactique","Elle transforme l'acide malique, vif comme une pomme verte, en acide lactique plus doux. Certaines maisons la bloquent pour garder un style tendu et droit."],
+  assemblage:["L'art de l'assemblage","La plupart des champagnes assemblent des cépages, des villages et des années différents. Les vins de réserve, gardés des récoltes précédentes, assurent la constance du style d'une année à l'autre."],
+  reserve:["Les vins de réserve","Les vins clairs qui ne sont pas mis en bouteille sont gardés en réserve. Ils enrichissent les futurs assemblages et amortissent les petites années."],
+  rose:["Le rosé d'assemblage","La Champagne est l'une des rares appellations où l'on peut faire un rosé en mélangeant du vin blanc et du vin rouge. L'autre méthode, la saignée, laisse macérer les raisins noirs."],
+  bdb:["Blanc de blancs, blanc de noirs","Un blanc de blancs n'est fait que de raisins blancs, presque toujours du chardonnay. Un blanc de noirs vient uniquement de pinot noir et de meunier."],
+  millesime:["Le millésime","Un champagne millésimé n'utilise que les vins d'une seule année, jugée assez belle. Il doit vieillir au moins 3 ans avant d'être vendu."],
+  tirage:["Le tirage et la prise de mousse","Au tirage, on ajoute au vin une liqueur de tirage (sucre et levures) avant la mise en bouteille. La seconde fermentation en bouteille crée les bulles : environ 6 bars de pression."],
+  lattes:["Le vieillissement sur lattes","Un champagne sans année doit vieillir au moins 15 mois en cave, dont 12 sur lies. Plus il reste sur lies, plus il gagne en arômes de brioche et de fruits secs."],
+  remuage:["Le remuage","Le remuage fait glisser le dépôt de levures vers le goulot. À la main, un remueur tourne des milliers de bouteilles par jour sur des pupitres ; les gyropalettes le font en quelques jours."],
+  degorg:["Le dégorgement","Le col de la bouteille est plongé dans une saumure glacée : le dépôt gèle, puis il est expulsé par la pression à l'ouverture."],
+  dosage:["Le dosage","La liqueur d'expédition fixe le style : brut nature (moins de 3 g/L de sucre), extra brut (0 à 6), brut (moins de 12), extra dry (12 à 17), sec (17 à 32), demi-sec (32 à 50), doux (plus de 50)."],
+  bnature:["Sans sucre, sans filet","Un brut nature ne masque rien : il faut un vin très équilibré et longuement vieilli, sinon il paraît dur et acide."],
+  statuts:["Les lettres de l'étiquette","Deux lettres sur l'étiquette disent qui a fait le vin : RM pour un récoltant-manipulant, NM pour un négociant-manipulant, CM pour une coopérative, RC pour un récoltant-coopérateur. En créant ta marque, tu deviens RM."],
+  negoce:["Vignerons et maisons","Les vignerons possèdent l'essentiel du vignoble champenois, environ 90 %. Les grandes maisons en possèdent peu mais vendent la majorité des bouteilles : elles achètent leurs raisins aux vignerons."],
+  dompe:["Dom Pérignon","Le moine Dom Pérignon, à l'abbaye d'Hautvillers, n'a pas inventé le champagne. Il a perfectionné l'assemblage des raisins et le pressurage des raisins noirs pour obtenir des vins blancs."],
+  vincent:["Saint Vincent","Saint Vincent est le patron des vignerons. Chaque année, autour du 22 janvier, les villages champenois le fêtent avec messe, défilé et bannières."],
+  craie:["La craie","Le sous-sol de craie retient l'eau comme une éponge et la rend à la vigne en été. À Reims, d'anciennes carrières de craie, les crayères, servent de caves à température constante."],
+  crus:["Grands et premiers crus","L'appellation Champagne couvre environ 34 000 hectares sur plus de 300 villages. 17 villages sont classés grand cru et 42 premier cru."],
+  gel:["Le gel de printemps","Après le débourrement, une nuit à -2 °C suffit à griller les jeunes pousses. Bougies, tours antigel ou aspersion d'eau protègent les bourgeons."],
+  floraison:["La floraison","Les vendanges commencent en général une centaine de jours après la floraison. Une floraison sous la pluie donne de la coulure : des fleurs qui ne deviennent jamais des baies."],
+  ban:["Le ban des vendanges","Chaque année, la filière fixe le rendement maximum autorisé en kilos par hectare et les dates d'ouverture des vendanges, village par village et cépage par cépage."],
+  prix:["Le prix du raisin","Le raisin de Champagne est parmi les plus chers de France, souvent autour de 7 à 8 € le kilo. Un contrat signé avec une maison garantit le prix à l'avance."],
+  demande:["Prix et demande","Plus ton prix public est élevé, moins tu vends de bouteilles. Une bonne réputation et une belle qualité te permettent de monter tes prix sans perdre tes clients."],
+  concours:["Les concours","Une médaille au concours attire l'attention des cavistes et des particuliers. Elle se juge à l'aveugle, sur la bouteille finie."],
+};
+const MONTH_INFO=[
+  "La vigne dort. C'est le début de la taille, le travail le plus long de l'année. Le 22, les villages fêtent saint Vincent, patron des vignerons. En cave, on prépare l'assemblage.",
+  "La taille continue sur toutes les parcelles. En cave, on déguste les vins clairs de la dernière vendange pour composer les assemblages.",
+  "Fin de la taille et liage des baguettes. La vigne « pleure » : la sève coule par les plaies de taille, signe de réveil. Les tirages commencent.",
+  "Débourrement : les bourgeons s'ouvrent. C'est le mois du gel. Les premiers traitements contre les maladies commencent.",
+  "La vigne pousse vite : ébourgeonnage pour garder les bonnes pousses. Le mildiou guette si le printemps est humide.",
+  "Floraison : on compte environ 100 jours jusqu'aux vendanges. Palissage pour relever la végétation. Fin juin, les vins clairs non tirés partent en réserve.",
+  "Les grappes grossissent. Rognage, palissage et surveillance des maladies. Un orage de grêle peut tout ravager en quelques minutes.",
+  "Véraison : les raisins changent de couleur et mûrissent. La filière fixe le rendement autorisé et les dates de vendange.",
+  "Vendanges ! Cueillette à la main, puis direction le pressoir. Tu choisis ce que tu presses pour toi et ce que tu vends à la Maison Delaunay.",
+  "Fermentations : les moûts deviennent des vins clairs. Choisis de faire ou non la fermentation malolactique. Labours d'automne.",
+  "Les feuilles tombent. Buttage des souches avant l'hiver. Les commandes de fin d'année arrivent : dégorge à temps.",
+  "Le mois des fêtes, la plus grosse période de ventes. Le 31 décembre, bilan de l'année, impôts et droits de succession.",
+];
+
+/* ================= données de jeu ================= */
+const PARCELS=[
+  {id:"crayeres",n:"Les Crayères",cep:"CH",ha:0.7,r:[-60,-25,45,70]},
+  {id:"montbenoit",n:"Le Mont Benoît",cep:"PN",ha:0.8,r:[-15,20,50,78]},
+  {id:"hautes",n:"Les Hautes Vignes",cep:"PM",ha:0.5,r:[30,62,42,66]},
+  {id:"longues",n:"Les Longues Raies",cep:"PN",ha:1.0,r:[-100,-72,38,62],lease:14000},
+  {id:"moulin",n:"Le Clos du Moulin",cep:"CH",ha:0.6,r:[72,100,38,58],price:680000},
+];
+const PBY=Object.fromEntries(PARCELS.map(p=>[p.id,p]));
+const NEIGH=[[-140,-108,36,96],[-100,-72,70,100],[-60,-25,78,102],[-15,20,86,104],[30,62,74,102],[72,100,66,100],[108,145,36,96]];
+const TASKS=[
+  {id:"taille",n:"Taille",m:[0,1,2],d:5,c:3500,fact:"taille",miss:{y:-.3,q:-5},desc:"Couper les sarments de l'an dernier pour ne garder que les bourgeons qui porteront les grappes."},
+  {id:"liage",n:"Liage",m:[2,3],d:2,c:1200,fact:"liage",miss:{h:-6},desc:"Attacher les baguettes taillées au fil porteur."},
+  {id:"trait",n:"Protection du vignoble",m:[3,4,5,6,7],monthly:true,d:1,c:600,fact:"trait",desc:"Surveiller et protéger la vigne contre le mildiou et l'oïdium ce mois-ci."},
+  {id:"ebour",n:"Ébourgeonnage",m:[4],d:3,c:1800,fact:"ebour",miss:{q:-4,h:-5},desc:"Retirer les pousses en trop pour aérer la souche."},
+  {id:"pal",n:"Palissage",m:[5,6],d:3,c:1800,fact:"pal",miss:{h:-8,q:-2},desc:"Relever les rameaux entre les fils."},
+  {id:"rog",n:"Rognage",m:[6],d:1,c:700,fact:"rog",miss:{q:-2},desc:"Couper l'extrémité des rameaux qui dépassent."},
+  {id:"vend",n:"Vendanges",m:[8],d:1,c:0,fact:"vend",desc:"Cueillette manuelle, grappes entières. Les cueilleurs sont payés environ 0,90 € par kilo."},
+  {id:"labour",n:"Labour et buttage",m:[9,10],d:2,c:900,fact:"labour",miss:{h:-4},desc:"Travailler le sol et protéger le pied des souches avant l'hiver."},
+];
+const METHODS=["Chablis","Cordon de Royat","Guyot","Vallée de la Marne"];
+const IDEAL={CH:"Chablis",PN:"Cordon de Royat",PM:"Vallée de la Marne"};
+const INV=[
+  {id:"marque",loc:"maison",t:"Créer ta marque",d:"Statut récoltant-manipulant, étiquette, dépôt de marque. Débloque cavistes, restaurants, importateurs, et fait grandir ta réputation.",c:9000,once:true,fact:"statuts"},
+  {id:"web",loc:"maison",t:"Boutique en ligne",d:"Plus de ventes directes chaque mois.",c:6000,once:true,need:"marque"},
+  {id:"caveau",loc:"maison",t:"Caveau de dégustation",d:"Œnotourisme : beaucoup plus de ventes directes, et +1 de réputation par mois l'été.",c:70000,once:true,need:"marque"},
+  {id:"antigel",loc:"maison",t:"Protection antigel",d:"Bougies et tour antigel : les pertes dues au gel de printemps sont divisées par deux.",c:18000,once:true,fact:"gel"},
+  {id:"pressoir",loc:"pressoir",t:"Pressoir pneumatique 4 000 kg",d:"Tu presses chez toi : plus de frais de pressurage (0,35 €/kg) et +3 de qualité.",c:60000,once:true},
+  {id:"cuv",loc:"cave",t:"Cuverie inox +5 000 L",d:"Au-delà de ta cuverie, la coopérative vinifie pour toi à 1 € le litre.",c:20000},
+  {id:"cavecap",loc:"cave",t:"Agrandir la cave +10 000 bouteilles",d:"Une nouvelle galerie creusée dans la craie, à température constante.",c:35000,fact:"craie"},
+  {id:"gyro",loc:"cave",t:"Gyropalettes",d:"Remuage automatique : plus besoin de passer tes journées à tourner les bouteilles.",c:25000,once:true,fact:"remuage"},
+];
+const OFF=[
+  {id:"bxl",c:"Caviste à Bruxelles",d:"Un caviste du centre veut un champagne de vigneron pour sa sélection.",p:19,q:[120,400],r:0,dos:"Brut",rep:2},
+  {id:"pat",c:"Pâtissier de Reims",d:"Pour accompagner ses desserts, il cherche un champagne plus doux.",p:21,q:[60,150],r:8,dos:"Demi-sec",rep:1},
+  {id:"mar",c:"Organisatrice de mariages",d:"Une série de réceptions à fournir cet été.",p:21,q:[150,400],r:10,dos:"Brut",rep:1,months:[2,3,4,5,6,7]},
+  {id:"ce",c:"Comité d'entreprise",d:"Coffrets cadeaux pour les fêtes de fin d'année.",p:19,q:[300,900],r:15,rep:1,months:[8,9,10,11]},
+  {id:"gms",c:"Centrale d'achat de supermarchés",d:"Gros volume, petit prix. Ton image en souffre.",p:13.5,q:[1500,4000],r:8,rep:-4},
+  {id:"cav",c:"Réseau de cavistes en France",d:"Référencement dans une vingtaine de boutiques.",p:18.5,q:[400,1200],r:22,dos:"Brut",rep:3},
+  {id:"res",c:"Restaurant étoilé à Reims",d:"Le sommelier veut ta cuvée à la carte, si elle est à la hauteur.",p:31,q:[60,180],r:28,minQ:64,dos:"Extra brut",rep:4},
+  {id:"uk",c:"Importateur à Londres",d:"Le Royaume-Uni est l'un des plus gros marchés export du champagne.",p:20,q:[600,1500],r:35,dos:"Brut",rep:3},
+  {id:"jp",c:"Importateur à Tokyo",d:"Très exigeant sur la qualité, fidèle une fois convaincu.",p:25,q:[300,900],r:45,minQ:68,dos:"Extra brut",rep:4},
+  {id:"pal",c:"Palace parisien",d:"Ta meilleure cuvée servie au verre au bar du palace.",p:46,q:[60,200],r:60,minQ:78,rep:6},
+];
+const MISSIONS=[
+  {id:"m1",t:"Tailler tes trois parcelles avant fin mars",chk:()=>["crayeres","montbenoit","hautes"].every(id=>G.pc[id].done.taille),fact:"tailleMatch"},
+  {id:"m2",t:"Visiter l'église du village",chk:()=>G.flags.eglise,fact:"vincent"},
+  {id:"m3",t:"Rencontrer la Maison Delaunay au château",chk:()=>G.flags.chateau,fact:"prix"},
+  {id:"m4",t:"Assembler et tirer la cuvée de ton père",chk:()=>G.flags.tirage,fact:"lattes"},
+  {id:"m5",t:"Réussir ta première vendange",chk:()=>G.flags.vend,fact:"ban"},
+  {id:"m6",t:"Presser tes propres raisins",chk:()=>G.flags.press,fact:"debourbage"},
+  {id:"m7",t:"Créer ta marque de champagne",chk:()=>G.eq.marque,fact:"crus"},
+  {id:"m8",t:"Dégorger et doser ta première cuvée",chk:()=>G.flags.degorg,fact:"bnature"},
+  {id:"m9",t:"Vendre 1 000 bouteilles sous ta marque",chk:()=>G.brandSold>=1000,fact:"demande"},
+  {id:"m10",t:"Atteindre 40 de réputation",chk:()=>G.rep>=40,fact:"negoce"},
+  {id:"m11",t:"Mettre un millésime en cave",chk:()=>G.flags.mil,fact:"millesime"},
+  {id:"m12",t:"Décrocher une médaille d'or",chk:()=>G.flags.gold,fact:"concours"},
+];
+
+/* ================= état ================= */
+let G=null;
+function newState(name){
+  const pc={};
+  PARCELS.forEach((p,i)=>pc[p.id]={own:i<3?"own":"none",vq:52+ri(-3,3),health:85,q:52,ym:1,done:{},harvested:false,meth:null});
+  Object.values(pc).forEach(s=>s.q=s.vq);
+  return {name,year:2027,m:0,days:DAYS,cash:40000,debt:0,rep:5,succ:3,pc,
+    eq:{marque:false,web:false,caveau:false,antigel:false,pressoir:false,cuv:0,cave:8000,gyro:false,chef:false},
+    vc:{vintage:2026,PN:{L:1200,q:56},PM:{L:800,q:54},CH:{L:1000,q:58}},res:{L:0,q:0},malo:{},
+    pending:{},lots:[],fin:[{name:"Cuvée familiale (coopérative)",type:"BSA",dos:"Brut",b:600,q:55}],
+    price:26,offers:[],contract:{price:+rnd(7.1,7.7).toFixed(2),signed:false},spot:null,cap:null,
+    vint:{bonus:0},vintages:{},flags:{},learned:[],mdone:[],brandSold:0,concours:false,
+    yr:{rev:0,op:0},ml:[],lastYear:null,report:null,over:false,uid:1};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(G))}catch(e){}}
+function load(){try{const t=localStorage.getItem(KEY);return t?JSON.parse(t):null}catch(e){return null}}
+const am=()=>(G.year-2027)*12+G.m;
+function earn(v,l){if(!v)return;G.cash+=v;G.yr.rev+=v;G.ml.push({l,v})}
+function spend(v,l,fin){if(!v)return;G.cash-=v;if(!fin)G.yr.op+=v;G.ml.push({l,v:-v})}
+function owned(){return PARCELS.filter(p=>G.pc[p.id].own!=="none")}
+function haTot(){return owned().reduce((a,p)=>a+p.ha,0)}
+function caveUsed(){return G.lots.reduce((a,l)=>a+l.b,0)+G.fin.reduce((a,f)=>a+f.b,0)}
+function caveFree(){return G.eq.cave-caveUsed()}
+function maxDebt(){return 120000+owned().filter(p=>G.pc[p.id].own==="own").reduce((a,p)=>a+p.ha,0)*300000}
+function finCount(){return G.fin.reduce((a,f)=>a+f.b,0)}
+const qf=q=>0.75+q/200;
+const tkey=t=>t.monthly?"trait"+G.m:t.id;
+
+/* ================= interface : messages ================= */
+let factQ=[];
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2800)}
+function learn(id){if(!id||!FACTS[id]||G.learned.includes(id))return;G.learned.push(id);factQ.push(id);if($("#fact").hidden)nextFact()}
+function nextFact(){const id=factQ.shift();if(!id){$("#fact").hidden=true;return}$("#fT").textContent=FACTS[id][0];$("#fP").textContent=FACTS[id][1];$("#fact").hidden=false}
+$("#fOk").onclick=nextFact;
+function checkMissions(){
+  MISSIONS.forEach(m=>{if(!G.mdone.includes(m.id)&&m.chk()){G.mdone.push(m.id);G.rep=clamp(G.rep+2,0,100);toast("Mission accomplie : "+m.t);learn(m.fact)}});
+}
+
+/* ================= monde 3D ================= */
+function H(x,z){
+  const t=clamp((z-15)/95,0,1),base=28*t*t*(3-2*t);
+  const und=Math.sin(x*0.045+1)*2.2+Math.sin((x+z)*0.021)*1.6+Math.cos(x*0.013-z*0.017)*1.8;
+  const river=-3.6*Math.exp(-Math.pow((z+95)/11,2));
+  return base+und*(0.22+0.78*t)+river;
+}
+let renderer,scene,camera,sun,hemi,terrainMat,folMat,folMesh,grapeN,grapeB,player,legs=[],markers=[],grapeParcel={},neighGrapes=[],colliders=[];
+let camYaw=0,camDist=24,px=0,pz=-6,walkT=0;
+const VINE_RECTS=()=>[...PARCELS.map(p=>p.r),...NEIGH];
+function inRect(x,z,r,pad=0){return x>=r[0]-pad&&x<=r[1]+pad&&z>=r[2]-pad&&z<=r[3]+pad}
+function lam(c,o){return new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}))}
+function makeLabel(text,scale=1,sub){
+  const cv=document.createElement("canvas"),ctx=cv.getContext("2d");
+  const fs=44;ctx.font=`600 ${fs}px "Work Sans", sans-serif`;
+  const w=Math.ceil(Math.max(ctx.measureText(text).width,sub?ctx.measureText(sub).width*0.7:0))+40,h=sub?110:70;
+  cv.width=w;cv.height=h;
+  ctx.fillStyle="rgba(14,36,30,0.82)";const r=16;ctx.beginPath();ctx.moveTo(r,0);ctx.arcTo(w,0,w,h,r);ctx.arcTo(w,h,0,h,r);ctx.arcTo(0,h,0,0,r);ctx.arcTo(0,0,w,0,r);ctx.fill();
+  ctx.font=`600 ${fs}px "Work Sans", sans-serif`;ctx.fillStyle="#f3ecd9";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(text,w/2,sub?38:h/2);
+  if(sub){ctx.font=`500 ${fs*0.66}px "Work Sans", sans-serif`;ctx.fillStyle="#d9b75e";ctx.fillText(sub,w/2,82)}
+  const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));
+  sp.scale.set(w/34*scale,h/34*scale,1);return sp;
+}
+function addLabel(text,x,z,y,scale,sub){const s=makeLabel(text,scale,sub);s.position.set(x,H(x,z)+y,z);scene.add(s);return s}
+
+function init3D(){
+  renderer=new THREE.WebGLRenderer({canvas:$("#c"),antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  scene=new THREE.Scene();scene.background=new THREE.Color(0xa9cdee);scene.fog=new THREE.Fog(0xa9cdee,130,360);
+  camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,0.5,800);
+  hemi=new THREE.HemisphereLight(0xe4f0ff,0x6b5a3a,0.78);scene.add(hemi);
+  sun=new THREE.DirectionalLight(0xfff1d6,0.95);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+  Object.assign(sun.shadow.camera,{left:-50,right:50,top:50,bottom:-50,near:1,far:300});sun.shadow.bias=-0.0008;
+  scene.add(sun);scene.add(sun.target);
+  buildTerrain();buildRoads();buildVines();buildVillage();buildTrees();buildRiver();buildPlayer();buildMarkers();
+  addEventListener("resize",()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+}
+function buildTerrain(){
+  const geo=new THREE.PlaneGeometry(440,440,176,176);geo.rotateX(-Math.PI/2);
+  const pos=geo.attributes.position,cols=[];
+  const cG=new THREE.Color(0x7c9c52),cS=new THREE.Color(0xcbbf98),cF=new THREE.Color(0x4a6634),cV=new THREE.Color(0x8eab62),cR=new THREE.Color(0x9a9a6a),tmp=new THREE.Color();
+  const rects=VINE_RECTS(),rng=mulberry(7);
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,H(x,z));
+    if(rects.some(r=>inRect(x,z,r,1)))tmp.copy(cS);
+    else if(z>106)tmp.copy(cF);
+    else if(z<-84)tmp.copy(cR);
+    else if(z<25)tmp.copy(cV).lerp(cG,0.4+0.3*Math.sin(x*0.07));
+    else tmp.copy(cG);
+    const v=0.94+rng()*0.1;cols.push(tmp.r*v,tmp.g*v,tmp.b*v);
+  }
+  geo.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));geo.computeVertexNormals();
+  terrainMat=new THREE.MeshLambertMaterial({vertexColors:true});
+  const m=new THREE.Mesh(geo,terrainMat);m.receiveShadow=true;scene.add(m);
+}
+function ribbon(pts,w,color,dy=0.12){
+  const P=[];
+  for(let i=0;i<pts.length-1;i++){const [x0,z0]=pts[i],[x1,z1]=pts[i+1];const L=Math.hypot(x1-x0,z1-z0),n=Math.max(1,Math.ceil(L/2));for(let k=0;k<n;k++)P.push([x0+(x1-x0)*k/n,z0+(z1-z0)*k/n])}
+  P.push(pts[pts.length-1]);
+  const v=[],idx=[];
+  P.forEach((p,i)=>{const a=P[Math.max(0,i-1)],b=P[Math.min(P.length-1,i+1)];let dx=b[0]-a[0],dz=b[1]-a[1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;const nx=-dz*w/2,nz=dx*w/2;
+    v.push(p[0]+nx,H(p[0]+nx,p[1]+nz)+dy,p[1]+nz,p[0]-nx,H(p[0]-nx,p[1]-nz)+dy,p[1]-nz);
+    if(i<P.length-1){const k=i*2;idx.push(k,k+1,k+2,k+1,k+3,k+2)}});
+  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(v,3));g.setIndex(idx);g.computeVertexNormals();
+  const m=new THREE.Mesh(g,lam(color,{polygonOffset:true,polygonOffsetFactor:-2,side:THREE.DoubleSide}));m.receiveShadow=true;scene.add(m);
+}
+function buildRoads(){
+  const asph=0x76746c,chalk=0xe8e1cc;
+  ribbon([[-215,-14],[215,-14]],6,asph);
+  ribbon([[62,-14],[70,-24],[76,-37]],5,asph);
+  [[[0,-14],[0,3]],[[-16,-14],[-16,5]],[[17,-14],[17,5]],[[-36,-14],[-36,-6]],[[-22,-14],[-22,-21]],[[0,3],[0,31]],[[-145,31],[150,31]]].forEach(p=>ribbon(p,3.6,chalk));
+  [-104,-66,-20,25,67,104].forEach(x=>ribbon([[x,31],[x,106]],3.2,chalk,0.18));
+}
+function buildVines(){
+  const all=[],dummy=new THREE.Object3D();
+  const perParcel={};
+  VINE_RECTS().forEach((r,ri_)=>{const pid=ri_<PARCELS.length?PARCELS[ri_].id:null;const list=[];
+    for(let z=r[2]+1;z<=r[3]-1;z+=2.4)for(let x=r[0]+0.8;x<=r[1]-0.8;x+=1.4)list.push([x,z]);
+    if(pid)perParcel[pid]=list;else neighGrapes.push({list,white:ri_%2===0});
+    list.forEach(p=>all.push(p));});
+  const trunkGeo=new THREE.BoxGeometry(.14,.85,.14);trunkGeo.translate(0,.42,0);
+  const folGeo=new THREE.BoxGeometry(1.32,.95,.62);folGeo.translate(0,1.2,0);
+  const trunks=new THREE.InstancedMesh(trunkGeo,lam(0x5a4330),all.length);
+  folMat=lam(0x5d9c3c);folMesh=new THREE.InstancedMesh(folGeo,folMat,all.length);
+  all.forEach((p,i)=>{dummy.position.set(p[0],H(p[0],p[1]),p[1]);dummy.rotation.y=(Math.random()-.5)*0.15;dummy.scale.set(1,0.9+Math.random()*0.2,1);dummy.updateMatrix();trunks.setMatrixAt(i,dummy.matrix);folMesh.setMatrixAt(i,dummy.matrix)});
+  scene.add(trunks);scene.add(folMesh);
+  const gGeo=new THREE.BoxGeometry(.3,.34,.3);gGeo.translate(0,.62,.32);
+  grapeN=lam(0x3a2645);grapeB=lam(0xd2cf72);
+  const mk=(list,mat)=>{const im=new THREE.InstancedMesh(gGeo,mat,list.length);list.forEach((p,i)=>{dummy.position.set(p[0],H(p[0],p[1]),p[1]);dummy.rotation.y=0;dummy.scale.set(1,1,1);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix)});scene.add(im);return im};
+  PARCELS.forEach(p=>grapeParcel[p.id]=mk(perParcel[p.id],p.cep==="CH"?grapeB:grapeN));
+  neighGrapes=neighGrapes.map(n=>mk(n.list,n.white?grapeB:grapeN));
+}
+function box(w,h,d,c,x,y,z,parent){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),lam(c));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;(parent||scene).add(m);return m}
+function roof(w,d,h,c,y,parent){const g=new THREE.ConeGeometry(1,1,4);g.rotateY(Math.PI/4);const m=new THREE.Mesh(g,lam(c));m.scale.set(w*0.76,h,d*0.76);m.position.y=y+h/2;m.castShadow=true;parent.add(m);return m}
+function house(x,z,w,d,h,rot,wall,rc,collide=true){
+  const g=new THREE.Group();g.position.set(x,H(x,z)-0.3,z);g.rotation.y=rot;
+  box(w,h,d,wall,0,h/2,0,g);roof(w+0.6,d+0.6,h*0.65,rc,h,g);
+  box(1.1,2,0.15,0x4a3524,0,1,-d/2-0.05,g);
+  for(const s of[-1,1]){box(0.9,0.9,0.12,0x2d3a40,s*w*0.3,h*0.62,-d/2-0.04,g);if(h>5)box(0.9,0.9,0.12,0x2d3a40,s*w*0.3,h*0.25+1.4,-d/2-0.04,g)}
+  scene.add(g);if(collide)colliders.push({x,z,r:Math.max(w,d)/2+0.6});return g;
+}
+function buildVillage(){
+  const rng=mulberry(42),walls=[0xeae0c8,0xe2d4b6,0xd8cbb0,0xefe8d8,0xcdbb9b],roofs=[0x4b5560,0x56606b,0x9a4c35,0x8a4a36];
+  // maison familiale
+  house(0,9,11,7,6,0,0xefe5cf,0x4b5560);house(8.5,11,5,5,4,0,0xe2d4b6,0x56606b);
+  box(0.3,1.4,8,0xcdbb9b,-6,H(-6,8)+0.5,8);
+  addLabel(G.name,0.9,0,9,13,"Domaine familial");
+  // pressoir
+  house(-16,11,9,7,5,0,0xcdbb9b,0x9a4c35);box(3.2,3.4,0.2,0x3b2a1e,-16,H(-16,7.4)+1.5,7.4);
+  addLabel("Pressoir",0.8,-16,11,10);
+  // cave : butte de craie
+  const mound=new THREE.Mesh(new THREE.SphereGeometry(8,20,10,0,Math.PI*2,0,Math.PI/2),lam(0x86a35a));mound.scale.set(1.1,0.55,0.9);mound.position.set(17,H(17,13)-0.5,13);mound.receiveShadow=true;scene.add(mound);
+  box(5,4,1.4,0xe8e0cc,17,H(17,7)+1.6,7.4);box(2.4,2.8,0.3,0x2a1f18,17,H(17,7)+1.2,6.6);
+  for(let i=0;i<3;i++){const b=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,1.3,12),lam(0x7a4e2c));b.rotation.z=Math.PI/2;b.position.set(13.6+i*0.01,H(13.6,6)+0.55+i*0,4.6+i*1.2);b.castShadow=true;scene.add(b)}
+  colliders.push({x:17,z:13,r:8});
+  addLabel("Cave et cuverie",0.8,17,9,9);
+  // église Saint-Vincent
+  const ey=H(-36,6);box(7,7,13,0xd9cdb3,-36,ey+3.2,7);const ng=new THREE.Group();ng.position.set(-36,ey+6.6,7);roof(7.8,13.6,3.4,0x4b5560,0,ng);scene.add(ng);
+  box(4,13,4,0xd2c5a8,-36,ey+6.2,-0.5);const sp=new THREE.Mesh(new THREE.ConeGeometry(2.6,9,4),lam(0x3f4954));sp.rotation.y=Math.PI/4;sp.position.set(-36,ey+17.2,-0.5);sp.castShadow=true;scene.add(sp);
+  colliders.push({x:-36,z:6,r:7},{x:-36,z:-0.5,r:3});
+  addLabel("Église Saint-Vincent",0.8,-36,2,22);
+  // notaire et banque
+  house(-22,-28,9,7,7,0,0xefe8d8,0x4b5560);addLabel("Notaire et banque",0.8,-22,-28,11);
+  // château Delaunay
+  const cx=78,cz=-52,cy=H(cx,cz);
+  box(26,9,10,0xefe7d6,cx,cy+4.3,cz);const cr=new THREE.Group();cr.position.set(cx,cy+8.8,cz);roof(27,11,4,0x39424c,0,cr);scene.add(cr);
+  for(const s of[-1,1]){const t=new THREE.Mesh(new THREE.CylinderGeometry(3,3,12,16),lam(0xe6dcc6));t.position.set(cx+s*14,cy+6,cz);t.castShadow=true;scene.add(t);const c=new THREE.Mesh(new THREE.ConeGeometry(3.6,6,16),lam(0x39424c));c.position.set(cx+s*14,cy+15,cz);c.castShadow=true;scene.add(c)}
+  for(let i=-4;i<=4;i++)box(1.2,1.6,0.12,0x2d3a40,cx+i*2.6,cy+5.5,cz-5.05);
+  box(0.25,9,0.25,0x333333,cx,cy+17,cz);const fl=box(2.6,1.5,0.05,0xd9b75e,cx+1.4,cy+20.5,cz);fl.castShadow=false;
+  ribbon([[cx-14,cz-9],[cx+14,cz-9]],4,0xd8cfb8);
+  colliders.push({x:cx,z:cz,r:14},{x:cx-14,z:cz,r:3.5},{x:cx+14,z:cz,r:3.5});
+  addLabel("Maison Delaunay & Fils",1,cx,cz,26,"Négociant");
+  // maisons du village
+  const keep=[[0,9],[-16,11],[17,13],[-36,6],[-22,-28],[78,-52],[8,11]];
+  let tries=0,placed=[];
+  while(placed.length<30&&tries<600){tries++;
+    const north=rng()<0.35;const x=north?(rng()<0.5?-75+rng()*28:32+rng()*30):-80+rng()*140;const z=north?-6+rng()*22:-50+rng()*28;
+    if(Math.abs(z+14)<7)continue;if(x>55&&x<95&&z<-10)continue;
+    if([0,-16,17,-36,-22].some(px_=>Math.abs(x-px_)<5&&z<10&&z>-24))continue;
+    if(keep.some(k=>Math.hypot(k[0]-x,k[1]-z)<13))continue;if(placed.some(k=>Math.hypot(k[0]-x,k[1]-z)<9.5))continue;
+    const w=6+rng()*4,d=5+rng()*3,h=4.5+rng()*3;
+    house(x,z,w,d,h,(rng()-.5)*0.3+(north&&z>0?Math.PI:0),walls[Math.floor(rng()*walls.length)],roofs[Math.floor(rng()*roofs.length)]);placed.push([x,z]);
+  }
+  addLabel("Saint-Aubin-les-Craies",1,-82,-9,6);
+  addLabel("Épernay 8 km →",0.8,150,-9,5);
+}
+function buildTrees(){
+  const rng=mulberry(99),pts=[],round=[],pop=[];
+  for(let i=0;i<520;i++){const x=-210+rng()*420,z=106+rng()*95;pts.push([x,z,6+rng()*6])}
+  for(let i=0;i<60;i++){const x=-110+rng()*220,z=-80+rng()*100;if(Math.abs(z+14)<5||colliders.some(c=>Math.hypot(c.x-x,c.z-z)<c.r+2)||Math.hypot(x,z+6)<8)continue;if(VINE_RECTS().some(r=>inRect(x,z,r,2))||LOCS.some(l=>Math.hypot(l.x-x,l.z-z)<7))continue;round.push([x,z,2+rng()*1.5])}
+  for(let x=-200;x<=200;x+=7)if(Math.abs(x)>8)pop.push([x+rng()*2,-84+rng()*2,9+rng()*4]);
+  const d=new THREE.Object3D();
+  const cone=new THREE.ConeGeometry(2.2,1,7);cone.translate(0,0.5,0);
+  const im=new THREE.InstancedMesh(cone,lam(0x2f5a2e),pts.length);
+  pts.forEach((p,i)=>{d.position.set(p[0],H(p[0],p[1])-0.3,p[1]);d.scale.set(1+rng()*0.4,p[2],1+rng()*0.4);d.updateMatrix();im.setMatrixAt(i,d.matrix)});scene.add(im);
+  const sph=new THREE.IcosahedronGeometry(1,1);const im2=new THREE.InstancedMesh(sph,lam(0x4f7a38),round.length);
+  const trk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.25,.3,1,6),lam(0x5a4330),round.length);
+  round.forEach((p,i)=>{const y=H(p[0],p[1]);d.position.set(p[0],y+p[2]+1.6,p[1]);d.scale.set(p[2],p[2]*1.1,p[2]);d.updateMatrix();im2.setMatrixAt(i,d.matrix);d.position.set(p[0],y+1.2,p[1]);d.scale.set(1,2.4,1);d.updateMatrix();trk.setMatrixAt(i,d.matrix);colliders.push({x:p[0],z:p[1],r:0.8})});
+  im2.castShadow=true;scene.add(im2);scene.add(trk);
+  const pc=new THREE.ConeGeometry(1.1,1,6);pc.translate(0,0.5,0);const im3=new THREE.InstancedMesh(pc,lam(0x557a3a),pop.length);
+  pop.forEach((p,i)=>{d.position.set(p[0],H(p[0],p[1]),p[1]);d.scale.set(1,p[2],1);d.updateMatrix();im3.setMatrixAt(i,d.matrix)});scene.add(im3);
+}
+function buildRiver(){
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(440,16),new THREE.MeshLambertMaterial({color:0x5d8fa3}));m.rotation.x=-Math.PI/2;m.position.set(0,-2.4,-95);scene.add(m);
+  addLabel("La Marne",1,-30,-95,4);
+}
+function buildPlayer(){
+  player=new THREE.Group();
+  const mat=c=>lam(c);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.42,.48,1.3,10),mat(0x2f4f78));body.position.y=1.55;
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.36,12,10),mat(0xe2b897));head.position.y=2.55;
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,.16,12),mat(0x1f3b2f));cap.position.y=2.85;
+  const vis=new THREE.Mesh(new THREE.BoxGeometry(.5,.05,.3),mat(0x1f3b2f));vis.position.set(0,2.8,.35);
+  [body,head,cap,vis].forEach(o=>{o.castShadow=true;player.add(o)});
+  for(const s of[-1,1]){const lg=new THREE.Group();lg.position.set(s*.2,.95,0);const l=new THREE.Mesh(new THREE.BoxGeometry(.26,.95,.28),mat(0x3d3428));l.position.y=-.47;l.castShadow=true;lg.add(l);player.add(lg);legs.push(lg);
+    const ag=new THREE.Group();ag.position.set(s*.55,2.1,0);const a=new THREE.Mesh(new THREE.BoxGeometry(.18,.85,.2),mat(0x2f4f78));a.position.y=-.4;ag.add(a);player.add(ag);legs.push(ag)}
+  scene.add(player);
+}
+const LOCS=[
+  {id:"maison",n:"Maison familiale",x:0,z:1},
+  {id:"pressoir",n:"Pressoir",x:-16,z:3},
+  {id:"cave",n:"Cave et cuverie",x:17,z:3},
+  {id:"eglise",n:"Église Saint-Vincent",x:-36,z:-6},
+  {id:"banque",n:"Notaire et banque",x:-22,z:-21},
+  {id:"chateau",n:"Maison Delaunay & Fils",x:76,z:-35},
+  ...PARCELS.map(p=>({id:"p:"+p.id,n:p.n,x:(p.r[0]+p.r[1])/2,z:p.r[2]-3,parcel:p})),
+];
+function buildMarkers(){
+  LOCS.forEach(l=>{
+    const ring=new THREE.Mesh(new THREE.RingGeometry(2.3,2.9,40),new THREE.MeshBasicMaterial({color:0xd9b75e,transparent:true,opacity:.85,side:THREE.DoubleSide}));
+    ring.rotation.x=-Math.PI/2;ring.position.set(l.x,H(l.x,l.z)+0.35,l.z);scene.add(ring);l.ring=ring;
+    if(l.parcel){l.label=addLabel(l.parcel.n,0.85,l.x,l.z+3,6,`${CEP[l.parcel.cep]} · ${String(l.parcel.ha).replace(".",",")} ha`)}
+    markers.push(l);
+  });
+  refreshMarkers();
+}
+function refreshMarkers(){markers.forEach(l=>{if(l.parcel){const own=G.pc[l.parcel.id].own!=="none";l.ring.material.color.set(own?0xd9b75e:0x9aa39c)}})}
+const SEAS=[
+  {sky:0xc3ccd3,ground:0xdfe2d6,fol:null,sun:.7},{sky:0xc7d1d9,ground:0xd9dccd,fol:null,sun:.75},{sky:0xbfd3e3,ground:0xccd6b8,fol:null,sun:.85},
+  {sky:0xb3d0ea,ground:0xc4d8a6,fol:0xb6d873,sun:.9},{sky:0xa9cdee,ground:0xffffff,fol:0x8cc35a,sun:.95},{sky:0x9fcaf0,ground:0xffffff,fol:0x5d9c3c,sun:1},
+  {sky:0x9dc8f0,ground:0xf7f2da,fol:0x4c8a33,sun:1,gr:"vert"},{sky:0xa6c9ea,ground:0xf0e8c8,fol:0x4e8030,sun:1,gr:"mur"},{sky:0xb2cbe2,ground:0xeee3c2,fol:0x6c8a2f,sun:.95,gr:"mur"},
+  {sky:0xbcc8d4,ground:0xebdfbf,fol:0xc89b35,sun:.85},{sky:0xbcc3c9,ground:0xdfd8c4,fol:0xa9622c,sun:.75},{sky:0xbfc6cc,ground:0xe4e6dc,fol:null,sun:.7},
+];
+function applySeason(){
+  const s=SEAS[G.m];scene.background.set(s.sky);scene.fog.color.set(s.sky);terrainMat.color.set(s.ground);sun.intensity=s.sun;
+  folMesh.visible=!!s.fol;if(s.fol)folMat.color.set(s.fol);
+  if(s.gr==="vert"){grapeN.color.set(0x8fae4a);grapeB.color.set(0x9db954)}else{grapeN.color.set(0x3a2645);grapeB.color.set(0xd2cf72)}
+  const gv=!!s.gr;
+  PARCELS.forEach(p=>{grapeParcel[p.id].visible=gv&&!(G.pc[p.id].own!=="none"&&G.pc[p.id].harvested)});
+  neighGrapes.forEach(n=>n.visible=gv);
+}
+
+/* ================= contrôles ================= */
+const keys={};let jx=0,jy=0,joyId=null;
+addEventListener("keydown",e=>{if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;keys[e.key.toLowerCase()]=true;if((e.key==="e"||e.key==="Enter")&&!uiOpen()&&near)openLoc(near.id)});
+addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false});
+const joy=$("#joy"),knob=$("#knob");
+joy.addEventListener("pointerdown",e=>{joyId=e.pointerId;joy.setPointerCapture(e.pointerId);moveJoy(e)});
+joy.addEventListener("pointermove",e=>{if(e.pointerId===joyId)moveJoy(e)});
+const endJoy=e=>{if(e.pointerId===joyId){joyId=null;jx=jy=0;knob.style.transform=""}};
+joy.addEventListener("pointerup",endJoy);joy.addEventListener("pointercancel",endJoy);
+function moveJoy(e){const r=joy.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const R=r.width/2,l=Math.hypot(dx,dy);if(l>R){dx*=R/l;dy*=R/l}jx=dx/R;jy=-dy/R;knob.style.transform=`translate(${dx}px,${dy}px)`}
+const ptrs=new Map();let pinch0=0;
+const cv=$("#c");
+cv.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cv.setPointerCapture(e.pointerId)}catch(_){}if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y)}});
+cv.addEventListener("pointermove",e=>{const p=ptrs.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x;p.x=e.clientX;p.y=e.clientY;
+  if(ptrs.size===1)camYaw-=dx*0.006;else if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0>0)camDist=clamp(camDist*pinch0/d,10,48);pinch0=d}});
+const upP=e=>{ptrs.delete(e.pointerId);pinch0=0};
+cv.addEventListener("pointerup",upP);cv.addEventListener("pointercancel",upP);
+cv.addEventListener("wheel",e=>{camDist=clamp(camDist+e.deltaY*0.02,10,48);e.preventDefault()},{passive:false});
+const uiOpen=()=>!$("#sheet").hidden||!$("#intro").hidden;
+
+/* ================= boucle ================= */
+let near=null,last=performance.now(),T=0,started=false;
+const camPos=new THREE.Vector3();
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min(0.05,(now-last)/1000);last=now;T+=dt;
+  if(!started)return;
+  let ix=0,iy=0;
+  if(!uiOpen()){
+    const k=keys;
+    ix=jx+((k.d||k.arrowright)?1:0)-((k.q||k.a||k.arrowleft)?1:0);
+    iy=jy+((k.z||k.w||k.arrowup)?1:0)-((k.s||k.arrowdown)?1:0);
+    ix=clamp(ix,-1,1);iy=clamp(iy,-1,1);
+  }
+  const fx=Math.sin(camYaw),fz=Math.cos(camYaw),rx=-Math.cos(camYaw),rz=Math.sin(camYaw);
+  const mx=fx*iy+rx*ix,mz=fz*iy+rz*ix,sp=Math.hypot(mx,mz);
+  if(sp>0.08){
+    const s=Math.min(1,sp)*11*dt;px+=mx/sp*s;pz+=mz/sp*s;
+    player.rotation.y=Math.atan2(mx,mz);walkT+=dt*10;
+    for(const c of colliders){const dx=px-c.x,dz=pz-c.z,d=Math.hypot(dx,dz);if(d<c.r&&d>0.001){px=c.x+dx/d*c.r;pz=c.z+dz/d*c.r}}
+    px=clamp(px,-195,195);pz=clamp(pz,-84,190);
+  }else walkT*=0.85;
+  const py=H(px,pz);player.position.set(px,py,pz);
+  const sw=Math.sin(walkT)*0.6*(sp>0.08?1:0);
+  legs[0].rotation.x=sw;legs[2].rotation.x=-sw;legs[1].rotation.x=-sw*0.8;legs[3].rotation.x=sw*0.8;
+  camPos.set(px-fx*camDist*0.78,py+camDist*0.6,pz-fz*camDist*0.78);
+  const ch=H(camPos.x,camPos.z)+3;if(camPos.y<ch)camPos.y=ch;
+  camera.position.lerp(camPos,1-Math.pow(0.001,dt));camera.lookAt(px,py+2,pz);
+  sun.position.set(px-40,py+90,pz-70);sun.target.position.set(px,py,pz);
+  let best=null,bd=1e9;
+  markers.forEach(l=>{const s=1+Math.sin(T*3)*0.06;l.ring.scale.set(s,s,s);const d=Math.hypot(px-l.x,pz-l.z);if(d<4.2&&d<bd){bd=d;best=l}});
+  if(best!==near){near=best;const a=$("#act");if(near){a.textContent=near.parcel?`Parcelle : ${near.n}`:near.n;a.hidden=false}else a.hidden=true}
+  if(uiOpen())$("#act").hidden=true;else if(near)$("#act").hidden=false;
+  renderer.render(scene,camera);
+}
+
+/* ================= HUD ================= */
+function urgent(){
+  const out=[];
+  owned().forEach(p=>{const s=G.pc[p.id];TASKS.forEach(t=>{if(!t.m.includes(G.m))return;if(t.id==="vend"){if(!s.harvested)out.push({p,t,last:true});return}if(!s.done[tkey(t)])out.push({p,t,last:t.monthly||t.m[t.m.length-1]===G.m})})});
+  return out;
+}
+function updHUD(){
+  $("#hDate").textContent=`${Mois(G.m)} ${G.year}`;
+  $("#hDays").textContent=`${G.days} jour${G.days>1?"s":""} de travail restant${G.days>1?"s":""}`;
+  $("#hCash").textContent=eur(G.cash);$("#hCash").style.color=G.cash<0?"var(--bad)":"";
+  $("#hRep").textContent=`Réputation ${G.rep}/100${G.debt?` · dette ${eur(G.debt)}`:""}`;
+  const u=urgent();const by={};u.forEach(x=>{(by[x.t.n]=by[x.t.n]||[]).push(x.p.n)});
+  let h=Object.entries(by).map(([t,ps])=>`${t} : ${ps.length} parcelle${ps.length>1?"s":""}`).join(" · ");
+  if(Object.keys(G.pending).length)h+=(h?" · ":"")+"Raisins à presser au pressoir";
+  if(G.m<=5&&G.vc.vintage===G.year-1&&["PN","PM","CH"].some(c=>G.vc[c].L>=50))h+=(h?" · ":"")+"Assemblage possible à la cave";
+  $("#hint").textContent=h?`À faire en ${MOIS[G.m]} : ${h}`:"";
+}
+
+/* ================= tiroir ================= */
+let curLoc=null;
+function openLoc(id){
+  curLoc=id;
+  if(id==="eglise"&&!G.flags.eglise){G.flags.eglise=true;learn("dompe")}
+  if(id==="chateau"&&!G.flags.chateau){G.flags.chateau=true;learn("negoce")}
+  checkMissions();renderSheet();$("#sheet").hidden=false;$("#sBody").scrollTop=0;save();
+}
+function closeSheet(){$("#sheet").hidden=true;curLoc=null;updHUD()}
+$("#sClose").onclick=closeSheet;
+document.querySelectorAll("[data-ui]").forEach(b=>b.onclick=()=>openLoc(b.dataset.ui));
+$("#act").onclick=()=>{if(near)openLoc(near.id)};
+function renderSheet(){
+  if(!curLoc)return;
+  let t="",h="";const id=curLoc;
+  if(id.startsWith("p:")){const p=PBY[id.slice(2)];t=p.n;h=vParcel(p)}
+  else ({maison:()=>{t="Maison familiale";h=vMaison()},pressoir:()=>{t="Pressoir";h=vPressoir()},cave:()=>{t="Cave et cuverie";h=vCave()},
+    eglise:()=>{t="Église Saint-Vincent";h=vEglise()},banque:()=>{t="Notaire et banque";h=vBanque()},chateau:()=>{t="Maison Delaunay & Fils";h=vChateau()},
+    carte:()=>{t="Carte du village";h=vCarte()},missions:()=>{t="Missions";h=vMissions()},carnet:()=>{t="Carnet du vigneron";h=vCarnet()},
+    fin:()=>{t=`Terminer ${MOIS[G.m]} ${G.year}`;h=vFin()},report:()=>{t=G.report.title;h=vReport()},over:()=>{t="Faillite";h=vOver()}})[id]();
+  $("#sTitle").textContent=t;$("#sBody").innerHTML=h;updHUD();afterRender();
+}
+const invCard=i=>{
+  const done=i.once&&G.eq[i.id],lock=i.need&&!G.eq[i.need];
+  return `<div class="card ${done?"done":""}"><div class="row"><div><h4>${i.t}</h4><p>${i.d}</p></div><span class="price">${eur(i.c)}</span></div>
+  ${done?`<span class="chip ok" style="justify-self:start">Acquis</span>`:`<button data-a="buy" data-id="${i.id}" ${lock||G.cash<i.c?"disabled":""}>${lock?"Crée d'abord ta marque":G.cash<i.c?"Trésorerie insuffisante":"Investir"}</button>`}</div>`;
+};
+function infoMonth(){return `<div class="card fact"><h4>${Mois(G.m)} en Champagne</h4><p>${MONTH_INFO[G.m]}</p></div>`}
+
+/* ---- parcelle ---- */
+function estKg(p){const s=G.pc[p.id];const raw=p.ha*11500*s.ym*(0.6+0.4*s.health/100);return Math.round(Math.min(raw,p.ha*(G.cap||11000))/10)*10}
+function grapeQ(p){const s=G.pc[p.id];return Math.round(clamp(s.q+(s.health>80?3:s.health<50?-6:0)+G.vint.bonus,20,98))}
+function vParcel(p){
+  const s=G.pc[p.id];
+  if(s.own==="none")return `<div class="card"><div class="chips"><span class="chip gold">${CEP[p.cep]}</span><span class="chip">${String(p.ha).replace(".",",")} ha</span><span class="chip">Voisin</span></div>
+    <p>Cette parcelle est exploitée par un voisin. ${p.lease?`Il accepte de te la louer en fermage pour ${eur(p.lease)} par an.`:`Elle est à vendre pour ${eur(p.price)}.`} Passe chez le notaire.</p></div>`;
+  const tasks=TASKS.filter(t=>t.m.includes(G.m));
+  const cards=tasks.map(t=>{
+    const days=Math.max(1,Math.round(t.d*p.ha)),cost=Math.round(t.c*p.ha);
+    if(t.id==="vend"){
+      if(s.harvested)return `<div class="card done"><h4>Vendanges</h4><span class="chip ok" style="justify-self:start">${num(s.kg)} kg rentrés</span></div>`;
+      const kg=estKg(p);
+      return `<div class="card"><h4>Vendanges</h4><p>${t.desc}</p><div class="kv"><span>Récolte estimée</span><span>${num(kg)} kg</span><span>Qualité des raisins</span><span>${grapeQ(p)}/100</span><span>Cueilleurs (payés en fin de mois)</span><span>${eur(kg*0.9)}</span><span>Ton temps</span><span>1 jour</span></div>
+      <button class="primary" data-a="vend" data-p="${p.id}" ${G.days<1?"disabled":""}>${G.days<1?"Plus de jours ce mois-ci":"Lancer les vendanges"}</button></div>`;
+    }
+    const done=s.done[tkey(t)];
+    const lastM=t.monthly||t.m[t.m.length-1]===G.m;
+    return `<div class="card ${done?"done":""}"><div class="row"><h4>${t.n}</h4>${done?`<span class="chip ok">Fait</span>`:lastM?`<span class="chip warn">Dernier mois</span>`:`<span class="chip">Jusqu'en ${MOIS[t.m[t.m.length-1]]}</span>`}</div><p>${t.desc}</p>
+    ${!done&&t.id==="taille"?`<label class="f" for="meth">Système de taille<select id="meth">${METHODS.map(m=>`<option ${s.meth===m||(!s.meth&&m==="Cordon de Royat")?"selected":""}>${m}</option>`).join("")}</select></label>`:""}
+    ${done?"":`<div class="btns"><button data-a="task" data-p="${p.id}" data-t="${t.id}" data-mode="self" ${G.days<days?"disabled":""}>Moi-même · ${days} j</button><button data-a="task" data-p="${p.id}" data-t="${t.id}" data-mode="team" ${G.cash<cost?"disabled":""}>Équipe · ${eur(cost)}</button></div>`}</div>`;
+  }).join("");
+  const next=TASKS.filter(t=>!t.m.includes(G.m)&&t.m[0]>G.m).map(t=>`${t.n} (${MOIS[t.m[0]]})`).join(", ");
+  return `<div class="card"><div class="chips"><span class="chip gold">${CEP[p.cep]}</span><span class="chip">${String(p.ha).replace(".",",")} ha</span><span class="chip">${s.own==="own"?"Propriété":"Fermage"}</span>${s.meth?`<span class="chip">Taille ${s.meth}</span>`:""}</div>
+    <div class="kv"><span>Santé de la vigne</span><span class="${s.health<60?"neg":""}">${Math.round(s.health)}/100</span><span>Qualité attendue des raisins</span><span>${grapeQ(p)}/100</span><span>Qualité des souches (long terme)</span><span>${s.vq}/100</span>${G.m<=8&&!s.harvested?`<span>Récolte potentielle</span><span>${num(estKg(p))} kg</span>`:""}</div></div>
+  <h3>Travaux de ${MOIS[G.m]}</h3>${cards||`<div class="card"><p>Pas de travaux prévus ce mois-ci sur cette parcelle.</p></div>`}
+  ${next?`<p class="muted">Plus tard cette année : ${next}.</p>`:""}${infoMonth()}`;
+}
+/* ---- maison ---- */
+function vMaison(){
+  const u=urgent();
+  const offers=G.eq.marque?(G.offers.length?G.offers.map((o,i)=>{
+      const avail=takeFin(o.n,o.dos,o.minQ,true);const ok=avail.sold>=o.n;
+      return `<div class="card"><div class="row"><div><h4>${o.c}</h4><p>${o.d}</p></div><span class="price">${eur2(o.p)}/btl</span></div>
+      <div class="chips"><span class="chip">${num(o.n)} btl</span>${o.dos?`<span class="chip gold">${o.dos}</span>`:""}${o.minQ?`<span class="chip">Qualité ${o.minQ}+</span>`:""}${o.rep?`<span class="chip ${o.rep>0?"ok":"warn"}">Réputation ${o.rep>0?"+":""}${o.rep}</span>`:""}<span class="chip">Jusqu'à fin ${MOIS[o.exp%12]}</span></div>
+      <button data-a="offer" data-i="${i}" ${ok?"":"disabled"}>${ok?`Livrer · environ ${eur(avail.rev*o.p)}`:`Il te manque ${num(o.n-avail.sold)} bouteilles${o.dos?` en ${o.dos.toLowerCase()}`:""}${o.minQ?` de qualité ${o.minQ}+`:""}`}</button></div>`}).join(""):`<div class="card"><p>Pas de proposition ce mois-ci. Les clients reviennent chaque mois, surtout avant les fêtes.</p></div>`)
+    :`<div class="card"><p>Sans marque, les professionnels ne te connaissent pas. Crée ta marque plus bas pour recevoir des propositions de cavistes, restaurants et importateurs.</p></div>`;
+  const dem=directDemand();
+  const stock=G.fin.length?`<div class="card tbl"><table><thead><tr><th>Cuvée</th><th>Dosage</th><th class="n">Btl</th><th class="n">Qualité</th></tr></thead><tbody>${G.fin.map(f=>`<tr><td>${f.name}</td><td>${f.dos}</td><td class="n">${num(f.b)}</td><td class="n">${f.q}</td></tr>`).join("")}</tbody></table></div>`:`<div class="card"><p>Aucune bouteille prête à vendre. Dégorge des bouteilles à la cave.</p></div>`;
+  return `${infoMonth()}
+  <h3>À faire ce mois-ci</h3><div class="card">${u.length?`<ul class="news">${u.map(x=>`<li>${x.p.n} : ${x.t.n.toLowerCase()}${x.last?" <span class='chip warn'>dernier mois</span>":""}</li>`).join("")}</ul>`:`<p>Les travaux de la vigne sont à jour.</p>`}</div>
+  <h3>Propositions des clients</h3>${offers}
+  <h3>Vente directe aux particuliers</h3>
+  <div class="card"><label class="f" for="price">Prix public de ta bouteille <em id="priceV">${eur(G.price)}</em><input type="range" id="price" min="14" max="60" step="1" value="${G.price}"></label>
+  <p id="demV">Demande estimée ce mois-ci : ${num(dem)} bouteilles, vendues automatiquement en fin de mois dans la limite de ton stock.</p>
+  ${G.eq.marque?"":`<p>Sans marque, seuls les amis et voisins achètent.</p>`}</div>
+  <h3>Bouteilles prêtes à vendre</h3>${stock}
+  ${(G.m===2||G.m===3)&&G.eq.marque?`<h3>Concours des vignerons</h3><div class="card"><p>Inscris ta meilleure cuvée finie. Résultats en mai.</p>${G.concours?`<span class="chip ok" style="justify-self:start">Inscrit</span>`:`<button data-a="concours" ${G.cash<400||!G.fin.length?"disabled":""}>S'inscrire · 400 €</button>`}</div>`:""}
+  <h3>Le domaine</h3>
+  <div class="card"><div class="row"><div><h4>Chef de culture</h4><p>+6 jours de travail par mois. Salaire de ${eur(CHEF_M)} par mois.</p></div></div><button data-a="chef">${G.eq.chef?"Se séparer du chef de culture":"Embaucher"}</button></div>
+  ${INV.filter(i=>i.loc==="maison").map(invCard).join("")}`;
+}
+/* ---- pressoir ---- */
+function grapePrice(){return G.contract.signed?G.contract.price:(G.spot||G.contract.price)}
+function vPressoir(){
+  const pend=Object.entries(G.pending);
+  let h="";
+  if(pend.length){
+    h+=`<div class="card"><h4>Raisins en attente</h4><p>Ce que tu ne presses pas pour toi est vendu à la Maison Delaunay à ${eur2(grapePrice())} le kilo${G.contract.signed?" (prix du contrat)":""}.</p>
+    ${pend.map(([c,v])=>`<label class="f" for="pr_${c}">${CEP[c]} : ${num(v.kg)} kg, qualité ${v.q}. À presser pour mes cuvées : <em id="pr_${c}v">0 kg</em><input type="range" id="pr_${c}" min="0" max="${Math.floor(v.kg/100)*100}" step="100" value="0"></label>`).join("")}
+    <label class="f" style="grid-template-columns:auto 1fr;align-items:center;gap:8px"><input type="checkbox" id="keepTaille" checked> Garder les jus de taille (plus de volume, un peu moins fin)</label>
+    <div class="kv" id="prPrev"></div>
+    <button class="primary" data-a="press">Valider le pressurage</button></div>`;
+  }else h+=`<div class="card"><p>${G.m===8?"Aucun raisin en attente. Vendange tes parcelles, puis reviens ici.":"Le pressoir sert pendant les vendanges, en septembre et octobre."}</p></div>`;
+  h+=`<div class="card fact"><h4>${FACTS.pressurage[0]}</h4><p>${FACTS.pressurage[1]}</p></div>`;
+  h+=INV.filter(i=>i.loc==="pressoir").map(invCard).join("");
+  return h;
+}
+function pressCalc(){
+  const keep=$("#keepTaille")?$("#keepTaille").checked:true;let kgP=0,kgS=0,L=0;
+  Object.entries(G.pending).forEach(([c,v])=>{const el=$("#pr_"+c);const k=el?+el.value:0;kgP+=k;kgS+=v.kg-k;L+=k*(keep?0.6375:0.5125)});
+  const cur=G.vc.vintage===G.year?["PN","PM","CH"].reduce((a,c)=>a+G.vc[c].L,0):0;
+  const coopL=Math.max(0,Math.min(L,cur+L-G.eq.cuv));
+  const press=G.eq.pressoir?0:kgP*0.35,coop=coopL*1.0,rev=kgS*grapePrice();
+  return {keep,kgP,kgS,L,coopL,press,coop,rev,net:rev-press-coop};
+}
+/* ---- cave ---- */
+function vCave(){
+  const v=G.vc,cl=["PN","PM","CH"];
+  let h=`<div class="kv card"><span>Bouteilles en cave</span><span>${num(caveUsed())} / ${num(G.eq.cave)}</span><span>Cuverie</span><span>${num(G.eq.cuv)} L${G.eq.cuv?"":" (vinification à la coopérative)"}</span></div>`;
+  const vcL=cl.reduce((a,c)=>a+v[c].L,0);
+  h+=`<h3>Vins clairs ${v.vintage}</h3><div class="card tbl"><table><thead><tr><th>Cépage</th><th class="n">Litres</th><th class="n">Qualité</th></tr></thead><tbody>${cl.map(c=>`<tr><td>${CEP[c]}</td><td class="n">${num(v[c].L)}</td><td class="n">${v[c].L?v[c].q:"–"}</td></tr>`).join("")}<tr><td>Vins de réserve</td><td class="n">${num(G.res.L)}</td><td class="n">${G.res.L?G.res.q:"–"}</td></tr></tbody></table></div>`;
+  if(v.vintage===G.year&&G.m>=8&&vcL>0&&G.malo[G.year]==null)
+    h+=`<div class="card"><h4>Fermentation malolactique</h4><p>${FACTS.malo[1]}</p><div class="btns"><button data-a="malo" data-v="1">La faire (style rond)</button><button data-a="malo" data-v="0">La bloquer (style vif)</button></div></div>`;
+  if(G.m<=5&&v.vintage===G.year-1&&vcL>=50)h+=vAssemble();
+  else if(G.m>5&&G.m<8)h+=`<p class="muted">Les assemblages se font de janvier à juin, avec les vins clairs de la vendange précédente.</p>`;
+  const ready=G.lots.filter(l=>l.age>=l.min);
+  h+=`<h3>Bouteilles sur lattes</h3>${G.lots.length?`<div class="card tbl"><table><thead><tr><th>Cuvée</th><th class="n">Btl</th><th class="n">Qual.</th><th>Âge</th></tr></thead><tbody>${G.lots.map(l=>`<tr><td>${l.name}<br><small class="muted">${TYPE[l.type]}${l.style?" · "+l.style:""}</small></td><td class="n">${num(l.b)}</td><td class="n">${l.q}</td><td>${l.age>=l.min?`<span class="chip ok">Prête · ${l.age} mois</span>`:`<span class="chip">${l.age}/${l.min} mois</span>`}</td></tr>`).join("")}</tbody></table></div>`:`<div class="card"><p>Aucune bouteille sur lattes.</p></div>`}`;
+  if(ready.length)h+=vDegorg(ready);
+  h+=`<h3>Équipements</h3>`+INV.filter(i=>i.loc==="cave").map(invCard).join("");
+  return h;
+}
+function sl(id,label,max,q){max=Math.floor(max/50)*50;return `<label class="f" for="${id}">${label} <small>(${num(max)} L dispo${max?`, qualité ${q}`:""})</small> <em id="${id}v">0 L</em><input type="range" id="${id}" min="0" max="${max}" step="50" value="0" ${max<50?"disabled":""}></label>`}
+function vAssemble(){
+  const v=G.vc,Y=v.vintage,exc=G.vintages[Y]&&G.vintages[Y].exc;
+  return `<h3>Assemblage et tirage</h3><div class="card"><p>Compose ta cuvée avec les vins clairs ${Y} et tes vins de réserve, puis mets-la en bouteille. Reste de vins clairs fin juin : ils partent en réserve.</p>
+  <label class="f" for="asType">Type de cuvée<select id="asType"><option value="BSA">Brut sans année (15 mois minimum)</option><option value="BDB">Blanc de blancs (100 % chardonnay)</option><option value="ROSE">Rosé d'assemblage</option>${exc?`<option value="MIL">Millésimé ${Y} (3 ans minimum)</option>`:""}</select></label>
+  <label class="f" for="asName">Nom de la cuvée<input type="text" id="asName" maxlength="30" value="${G.lots.length||G.flags.tirage?"Cuvée "+(Y+1):"Cuvée Héritage"}"></label>
+  ${sl("asPN","Pinot noir",v.PN.L,v.PN.q)}${sl("asPM","Meunier",v.PM.L,v.PM.q)}${sl("asCH","Chardonnay",v.CH.L,v.CH.q)}${sl("asRS","Vins de réserve",G.res.L,G.res.q)}
+  <div class="kv" id="asPrev"></div><p id="asMsg" class="muted"></p>
+  <button class="primary" data-a="assemble" id="asBtn" disabled>Assembler et mettre en bouteille</button></div>`;
+}
+function asCalc(){
+  const g=id=>$(id)?+$(id).value:0;
+  const type=$("#asType").value,pn=g("#asPN"),pm=g("#asPM"),ch=g("#asCH"),rs=g("#asRS"),v=G.vc;
+  const L=pn+pm+ch+rs;let msg="",ok=L>=150;
+  if(!ok)msg="Il faut au moins 150 litres pour une cuvée.";
+  const wq=L?(pn*v.PN.q+pm*v.PM.q+ch*v.CH.q+rs*G.res.q)/L:0;let bonus=0;const notes=[];
+  const sh=x=>L?x/L:0;
+  const n3=[pn,pm,ch].filter(x=>sh(x)>=0.15).length;
+  if(type==="BDB"&&(pn||pm)){ok=false;msg="Un blanc de blancs n'accepte que du chardonnay."}
+  if(type==="MIL"&&rs){ok=false;msg="Un millésimé n'utilise pas de vins de réserve : une seule année."}
+  if(type==="ROSE"&&sh(pn)<0.15&&L){ok=false;msg="Il faut au moins 15 % de pinot noir pour apporter le vin rouge du rosé."}
+  if(type==="BSA"||type==="ROSE"){if(n3===3){bonus+=4;notes.push("trois cépages : +4")}else if(n3===2){bonus+=1;notes.push("deux cépages : +1")}
+    if(sh(rs)>=0.1&&sh(rs)<=0.35){bonus+=3;notes.push("vins de réserve : +3")}else if(sh(rs)>0.5){bonus-=2;notes.push("trop de réserve : -2")}}
+  if(type==="BDB"&&v.CH.q>=62){bonus+=2;notes.push("beau chardonnay : +2")}
+  if(type==="MIL"){bonus+=3;notes.push("millésime : +3")}
+  const q=Math.round(clamp(wq+bonus,20,99)),btl=Math.floor(L/0.75),cost=Math.round(btl*1.8),days=Math.max(1,Math.ceil(btl/2500));
+  if(ok&&btl>caveFree()){ok=false;msg=`Pas assez de place en cave : ${num(caveFree())} places libres.`}
+  if(ok&&G.cash<cost){ok=false;msg="Trésorerie insuffisante pour le tirage."}
+  if(ok&&G.days<days){ok=false;msg=`Il te faut ${days} jour${days>1?"s":""} de travail.`}
+  return {type,pn,pm,ch,rs,L,q,btl,cost,days,ok,msg,notes,comp:L?`PN ${Math.round(sh(pn)*100)} % · PM ${Math.round(sh(pm)*100)} % · CH ${Math.round(sh(ch)*100)} %${rs?` · réserve ${Math.round(sh(rs)*100)} %`:""}`:"–"};
+}
+function vDegorg(ready){
+  return `<h3>Remuage, dégorgement et dosage</h3><div class="card"><p>Les bouteilles prêtes peuvent être dégorgées et dosées. Elles rejoignent alors ton stock à vendre.</p>
+  <label class="f" for="dgLot">Lot<select id="dgLot">${ready.map(l=>`<option value="${l.id}">${l.name} · ${num(l.b)} btl · ${l.age} mois</option>`).join("")}</select></label>
+  <label class="f" for="dgQty">Bouteilles à dégorger <em id="dgQtyv"></em><input type="range" id="dgQty" min="50" step="50" value="500"></label>
+  <label class="f" for="dgDos">Dosage<select id="dgDos">${DOS.map(d=>`<option value="${d[0]}" ${d[0]==="Brut"?"selected":""}>${d[0]} (${d[1]})</option>`).join("")}</select></label>
+  <div class="kv" id="dgPrev"></div><p id="dgMsg" class="muted"></p>
+  <button class="primary" data-a="degorg" id="dgBtn">Dégorger et doser</button></div>`;
+}
+function dgCalc(){
+  const lot=G.lots.find(l=>l.id===+$("#dgLot").value);if(!lot)return null;
+  const n=Math.min(+$("#dgQty").value,lot.b),dos=$("#dgDos").value;
+  let q=lot.q+Math.min(8,Math.floor((lot.age-lot.min)/6)*2);if(dos==="Brut nature"&&lot.q<65)q-=4;
+  const cost=Math.round(n*(1.1+(G.eq.gyro?0.15:0))),days=G.eq.gyro?0:Math.ceil(n/800);
+  let ok=true,msg=G.eq.gyro?"Remuage par gyropalettes.":`Remuage à la main sur pupitres : ${days} jour${days>1?"s":""}.`;
+  if(G.cash<cost){ok=false;msg="Trésorerie insuffisante."}else if(G.days<days){ok=false;msg=`Il te faut ${days} jours de remuage, il t'en reste ${G.days}. Dégorge moins de bouteilles ou achète des gyropalettes.`}
+  return {lot,n,dos,q:Math.round(clamp(q,20,99)),cost,days,ok,msg};
+}
+/* ---- château ---- */
+function vChateau(){
+  const lattes=G.lots.filter(l=>l.age>=3);
+  return `<div class="card"><p>La Maison Delaunay & Fils achète les raisins de ta famille depuis trente ans. Elle possède peu de vignes et dépend de vignerons comme toi.</p></div>
+  <h3>Contrat raisins ${G.year}</h3><div class="card">
+  ${G.contract.signed?`<span class="chip ok" style="justify-self:start">Contrat signé à ${eur2(G.contract.price)} le kilo</span><p>Tous les raisins que tu ne presses pas seront payés à ce prix en septembre.</p>`
+   :G.m<=6?`<p>La maison te propose ${eur2(G.contract.price)} le kilo, garanti, pour les raisins de cette année. Sans contrat, tu vendras au prix du marché de septembre, entre 6,60 et 8,60 € environ.</p><button class="primary" data-a="contract">Signer le contrat</button>`
+   :`<p>Trop tard pour un contrat cette année. ${G.spot?`Prix du marché : ${eur2(G.spot)} le kilo.`:"Le prix du marché sera connu fin août."}</p>`}</div>
+  <h3>Bouteilles sur lattes</h3><div class="card"><p>La maison rachète aussi des bouteilles non dégorgées, sans étiquette, pour sa propre marque : environ 11 € la bouteille selon la qualité. Pratique pour faire de la trésorerie, mais aucune réputation pour toi.</p>
+  ${lattes.length?lattes.map(l=>`<div class="row"><span>${l.name} · ${num(l.b)} btl · ${l.age} mois</span><button data-a="lattes" data-id="${l.id}">Vendre · ${eur(l.b*11*qf(l.q))}</button></div>`).join(""):`<p>Aucun lot assez avancé (3 mois minimum).</p>`}</div>`;
+}
+/* ---- église ---- */
+function vEglise(){
+  learn("vincent");learn("craie");
+  return `<div class="card"><p>Le clocher d'ardoise domine les coteaux. Une statue de saint Vincent tient une grappe à l'entrée.</p></div>
+  ${["dompe","vincent","craie"].map(f=>`<div class="card fact"><h4>${FACTS[f][0]}</h4><p>${FACTS[f][1]}</p></div>`).join("")}`;
+}
+/* ---- banque ---- */
+function vBanque(){
+  const L=PBY.longues,M=PBY.moulin,sl_=G.pc.longues.own,sm=G.pc.moulin.own;
+  const ly=G.lastYear;
+  return `<h3>Banque</h3><div class="card"><div class="kv"><span>Trésorerie</span><span>${eur(G.cash)}</span><span>Dette</span><span>${eur(G.debt)}</span><span>Encore empruntable</span><span>${eur(Math.max(0,maxDebt()-G.debt))}</span><span>Conditions</span><span>4,5 %/an, 10 %/an de capital</span></div>
+  <div class="btns"><button data-a="borrow" ${G.debt+25000>maxDebt()?"disabled":""}>Emprunter 25 000 €</button><button data-a="repay" ${G.debt<=0||G.cash<Math.min(25000,G.debt)?"disabled":""}>Rembourser ${eur(Math.min(25000,G.debt)||25000)}</button></div></div>
+  <h3>Notaire</h3>
+  <div class="card"><p>Droits de succession restants : ${eur(G.succ*SUCC)}, prélevés ${eur(SUCC)} chaque 31 décembre.</p></div>
+  <div class="card"><div class="row"><div><h4>${L.n}</h4><p>${L.ha} ha de pinot noir en fermage, ${eur(L.lease)} par an payés chaque mois.</p></div></div>
+  ${sl_==="none"?`<button data-a="lease">Signer le bail</button>`:`<span class="chip ok" style="justify-self:start">Bail signé</span>`}</div>
+  <div class="card"><div class="row"><div><h4>${M.n}</h4><p>${String(M.ha).replace(".",",")} ha de chardonnay à vendre. Augmente ta capacité d'emprunt.</p></div><span class="price">${eur(M.price)}</span></div>
+  ${sm==="none"?`<button data-a="buyland" ${G.cash<M.price?"disabled":""}>${G.cash<M.price?"Trésorerie insuffisante (emprunte d'abord)":"Acheter"}</button>`:`<span class="chip ok" style="justify-self:start">Propriété</span>`}</div>
+  ${ly?`<h3>Bilan ${ly.year}</h3><div class="card"><div class="kv"><span>Recettes</span><span class="pos">${eur(ly.rev)}</span><span>Charges</span><span class="neg">-${eur(ly.op)}</span><span class="tot">Résultat</span><span class="tot">${eur(ly.rev-ly.op)}</span><span>Impôts et cotisations</span><span>${eur(ly.tax)}</span></div></div>`:""}`;
+}
+/* ---- carte, missions, carnet ---- */
+function vCarte(){
+  const sx=x=>(x+150)*1.3,sz=z=>(120-z)*1.3;
+  const rects=PARCELS.map(p=>`<rect x="${sx(p.r[0])}" y="${sz(p.r[3])}" width="${(p.r[1]-p.r[0])*1.3}" height="${(p.r[3]-p.r[2])*1.3}" fill="${G.pc[p.id].own!=="none"?"#d9b75e":"#b8ad8a"}" opacity=".9"/>`).join("")+NEIGH.map(r=>`<rect x="${sx(r[0])}" y="${sz(r[3])}" width="${(r[1]-r[0])*1.3}" height="${(r[3]-r[2])*1.3}" fill="#a39b7c" opacity=".5"/>`).join("");
+  const dots=LOCS.map(l=>`<circle cx="${sx(l.x)}" cy="${sz(l.z)}" r="4" fill="#0e241e" stroke="#f3ecd9" stroke-width="1.5"/>`).join("");
+  return `<svg class="map" viewBox="0 0 390 300" role="img" aria-label="Plan du village et des parcelles">
+  <rect x="0" y="0" width="390" height="${sz(108)}" fill="#3f5c2f"/>
+  <rect x="0" y="${sz(-88)}" width="390" height="20" fill="#5d8fa3"/><line x1="0" y1="${sz(-14)}" x2="390" y2="${sz(-14)}" stroke="#555" stroke-width="5"/><line x1="0" y1="${sz(31)}" x2="390" y2="${sz(31)}" stroke="#e8e1cc" stroke-width="3"/>
+  ${rects}${dots}<circle cx="${sx(px)}" cy="${sz(pz)}" r="6" fill="#f08e78" stroke="#fff" stroke-width="2"/></svg>
+  <div class="card">${LOCS.map(l=>`<div class="row" style="align-items:center"><span>${l.n}${l.parcel?` <small class="muted">${CEP[l.parcel.cep]}${G.pc[l.parcel.id].own==="none"?", voisin":""}</small>`:""}</span><button data-a="goto" data-id="${l.id}">Y aller</button></div>`).join("")}</div>`;
+}
+function vMissions(){return `<div class="card"><p>${G.mdone.length}/${MISSIONS.length} missions accomplies. Chacune rapporte 2 points de réputation et une page de carnet.</p></div>`+MISSIONS.map(m=>`<div class="card ${G.mdone.includes(m.id)?"done":""}"><div class="row"><h4>${m.t}</h4>${G.mdone.includes(m.id)?`<span class="chip ok">Fait</span>`:`<span class="chip">À faire</span>`}</div></div>`).join("")}
+function vCarnet(){const all=Object.keys(FACTS);return `<div class="card"><p>${G.learned.length}/${all.length} pages découvertes. Chaque geste du vigneron t'en apprend une nouvelle.</p></div>`+G.learned.map(id=>`<div class="card fact"><h4>${FACTS[id][0]}</h4><p>${FACTS[id][1]}</p></div>`).join("")}
+function vFin(){
+  const u=urgent().filter(x=>x.last);
+  const pendW=Object.keys(G.pending).length&&G.m>=9;
+  return `${u.length||pendW?`<div class="card warnbox"><h4>Encore à faire avant la fin du mois</h4><ul class="news">${u.map(x=>`<li>${x.p.n} : ${x.t.n.toLowerCase()}</li>`).join("")}${pendW?"<li>Des raisins attendent au pressoir : ils seront vendus en urgence, moins cher.</li>":""}</ul><p>Un travail oublié coûte en récolte, en santé de la vigne ou en qualité.</p></div>`:`<div class="card goodbox"><p>Tout est en ordre pour ${MOIS[G.m]}.</p></div>`}
+  <div class="card"><p>Il te reste ${G.days} jour${G.days>1?"s":""} de travail. Ils ne se reportent pas au mois suivant.</p></div>
+  <button class="primary" data-a="endmonth">Passer à ${MOIS[(G.m+1)%12]}</button>`;
+}
+function vReport(){
+  const r=G.report;
+  return `${r.news.length?`<div class="card"><h4>Ce qui s'est passé</h4><ul class="news">${r.news.map(n=>`<li>${n}</li>`).join("")}</ul></div>`:""}
+  <div class="card"><h4>Comptes du mois</h4><div class="kv">${r.lines.map(l=>`<span>${l.l}</span><span class="${l.v<0?"neg":"pos"}">${l.v<0?"-":"+"}${eur(Math.abs(l.v))}</span>`).join("")}<span class="tot">Trésorerie</span><span class="tot">${eur(G.cash)}</span></div></div>
+  ${infoMonth()}<button class="primary" data-a="closereport">Au travail</button>`;
+}
+function vOver(){return `<div class="card warnbox"><p>La banque refuse de couvrir ton découvert. Le domaine ${G.name} doit être vendu.</p><p>Tu as tenu jusqu'en ${MOIS[G.m]} ${G.year}, avec ${G.mdone.length} missions accomplies et ${G.learned.length} pages de carnet.</p></div><button class="primary" data-a="restart">Recommencer</button>`}
+
+/* ---- aperçus dynamiques ---- */
+function afterRender(){
+  if($("#asType"))updAs();
+  if($("#dgLot"))updDg(true);
+  if($("#prPrev"))updPr();
+}
+function updAs(){
+  ["asPN","asPM","asCH","asRS"].forEach(id=>{const e=$("#"+id);if(e)$("#"+id+"v").textContent=num(+e.value)+" L"});
+  const c=asCalc();
+  $("#asPrev").innerHTML=`<span>Volume</span><span>${num(c.L)} L</span><span>Composition</span><span>${c.comp}</span><span>Bouteilles (75 cl)</span><span>${num(c.btl)}</span><span>Qualité estimée</span><span>${c.L?c.q:"–"}/100</span><span>Tirage (bouteille, liqueur, levures, capsule)</span><span class="neg">-${eur(c.cost)}</span><span>Temps</span><span>${c.days} j</span>`;
+  $("#asMsg").textContent=c.msg||(c.notes.length?"Bonus : "+c.notes.join(", "):"");$("#asBtn").disabled=!c.ok;
+}
+function updDg(reset){
+  const lot=G.lots.find(l=>l.id===+$("#dgLot").value);if(!lot)return;const r=$("#dgQty");
+  r.max=Math.max(50,Math.ceil(lot.b/50)*50);if(reset)r.value=Math.min(lot.b,500);
+  const c=dgCalc();$("#dgQtyv").textContent=num(c.n)+" btl";
+  $("#dgPrev").innerHTML=`<span>Qualité finale</span><span>${c.q}/100</span><span>Bouchon, muselet, liqueur, habillage</span><span class="neg">-${eur(c.cost)}</span>`;
+  $("#dgMsg").textContent=c.msg;$("#dgBtn").disabled=!c.ok;
+}
+function updPr(){
+  Object.keys(G.pending).forEach(c=>{const e=$("#pr_"+c);if(e)$("#pr_"+c+"v").textContent=num(+e.value)+" kg"});
+  const c=pressCalc();
+  $("#prPrev").innerHTML=`<span>Raisins vendus (${num(c.kgS)} kg)</span><span class="pos">+${eur(c.rev)}</span>${c.press?`<span>Pressurage coopérative</span><span class="neg">-${eur(c.press)}</span>`:""}${c.coop?`<span>Vinification à façon (${num(c.coopL)} L)</span><span class="neg">-${eur(c.coop)}</span>`:""}<span>Moûts pour tes cuvées</span><span>${num(c.L)} L</span><span class="tot">Solde</span><span class="tot ${c.net>=0?"pos":"neg"}">${eur(c.net)}</span>`;
+}
+$("#sBody").addEventListener("input",e=>{
+  const id=e.target.id;
+  if(id.startsWith("as"))updAs();
+  else if(id==="dgLot")updDg(true);else if(id.startsWith("dg"))updDg(false);
+  else if(id.startsWith("pr_")||id==="keepTaille")updPr();
+  else if(id==="price"){G.price=+e.target.value;$("#priceV").textContent=eur(G.price);$("#demV").textContent=`Demande estimée ce mois-ci : ${num(directDemand())} bouteilles, vendues automatiquement en fin de mois dans la limite de ton stock.`;learn("demande");save()}
+});
+$("#sBody").addEventListener("change",e=>{if(e.target.id==="dgLot")updDg(true);else if(e.target.id==="dgDos")updDg(false);else if(e.target.id==="asType")updAs();else if(e.target.id==="keepTaille")updPr()});
+
+/* ================= actions ================= */
+$("#sBody").addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]");if(!b||b.disabled)return;const d=b.dataset;
+  const A={
+    task:()=>doTask(d.p,d.t,d.mode),
+    vend:()=>doVend(d.p),
+    press:doPress,
+    malo:()=>{G.malo[G.year]=d.v==="1";learn("malo");toast(d.v==="1"?"Malolactique lancée : style plus rond":"Malolactique bloquée : style plus vif")},
+    assemble:doAssemble,degorg:doDegorg,
+    buy:()=>{const i=INV.find(x=>x.id===d.id);if(G.cash<i.c)return;spend(i.c,i.t,true);
+      if(i.id==="cuv")G.eq.cuv+=5000;else if(i.id==="cavecap")G.eq.cave+=10000;else G.eq[i.id]=true;
+      if(i.id==="marque")G.rep=clamp(G.rep+3,0,100);
+      toast(i.t);learn(i.fact);if(i.id==="marque")genOffers(1)},
+    chef:()=>{G.eq.chef=!G.eq.chef;if(G.eq.chef){G.days+=6;toast("Chef de culture embauché : +6 jours par mois")}else toast("Le chef de culture quitte le domaine")},
+    offer:()=>deliver(+d.i),
+    concours:()=>{spend(400,"Inscription au concours");G.concours=true;learn("concours")},
+    contract:()=>{G.contract.signed=true;learn("prix");toast("Contrat signé")},
+    lattes:()=>{const l=G.lots.find(x=>x.id===+d.id);const v=Math.round(l.b*11*qf(l.q));earn(v,`Bouteilles sur lattes vendues (${num(l.b)})`);G.lots=G.lots.filter(x=>x!==l);toast("+"+eur(v));learn("negoce")},
+    borrow:()=>{G.debt+=25000;G.cash+=25000;G.ml.push({l:"Emprunt",v:25000})},
+    repay:()=>{const r=Math.min(25000,G.debt);spend(r,"Remboursement anticipé",true);G.debt-=r},
+    lease:()=>{G.pc.longues.own="lease";refreshMarkers();applySeason();toast("Bail signé : 1 ha de pinot noir en plus");learn("crus")},
+    buyland:()=>{const M=PBY.moulin;spend(M.price,"Achat du Clos du Moulin",true);G.pc.moulin.own="own";refreshMarkers();applySeason();toast("Le Clos du Moulin est à toi")},
+    goto:()=>{const l=LOCS.find(x=>x.id===d.id);px=l.x;pz=l.z-2;camYaw=0;closeSheet();return true},
+    endmonth:()=>{endMonth();return true},
+    closereport:()=>{closeSheet();return true},
+    restart:()=>{try{localStorage.removeItem(KEY)}catch(_){}location.reload()},
+  };
+  const fn=A[d.a];if(!fn)return;const stop=fn();
+  checkMissions();save();if(!stop)renderSheet();updHUD();
+});
+function doTask(pid,tid,mode){
+  const p=PBY[pid],s=G.pc[pid],t=TASKS.find(x=>x.id===tid);
+  const days=Math.max(1,Math.round(t.d*p.ha)),cost=Math.round(t.c*p.ha);
+  let meth=null;
+  if(tid==="taille"){meth=$("#meth").value;if(meth==="Vallée de la Marne"&&p.cep!=="PM"){toast("Interdit : cette taille est réservée au meunier");learn("tailleVM");return}}
+  if(mode==="self"){if(G.days<days)return;G.days-=days}else{if(G.cash<cost)return;spend(cost,`${t.n} par une équipe`)}
+  s.done[tkey(t)]=true;
+  if(t.monthly)s.health=clamp(s.health+3,0,100);
+  if(mode==="self"&&(tid==="taille"||tid==="ebour"))s.q+=1;
+  if(meth){s.meth=meth;if(IDEAL[p.cep]===meth){s.q+=3;learn("tailleMatch");toast(`${meth} : le choix idéal pour le ${CEP[p.cep].toLowerCase()}`)}}
+  learn(t.fact);
+}
+function doVend(pid){
+  const p=PBY[pid],s=G.pc[pid];const kg=estKg(p),q=grapeQ(p),cost=Math.round(kg*0.9);
+  if(G.days<1)return;
+  G.days-=1;G.pickers=(G.pickers||0)+cost;
+  const pe=G.pending[p.cep]||{kg:0,q:0};pe.q=Math.round((pe.kg*pe.q+kg*q)/(pe.kg+kg||1));pe.kg+=kg;G.pending[p.cep]=pe;
+  s.harvested=true;s.kg=kg;G.flags.vend=true;
+  (G.vint.qs=G.vint.qs||[]).push(q);
+  applySeason();learn("vend");toast(`${num(kg)} kg de ${CEP[p.cep].toLowerCase()} rentrés. Direction le pressoir !`);
+}
+function doPress(){
+  const c=pressCalc();
+  if(G.cash+c.rev-c.press-c.coop<0){toast("Trésorerie insuffisante pour vinifier autant");return}
+  if(G.vc.vintage!==G.year){
+    const old=["PN","PM","CH"].reduce((a,k)=>a+G.vc[k].L,0);if(old>0)toReserve();
+    G.vc={vintage:G.year,PN:{L:0,q:0},PM:{L:0,q:0},CH:{L:0,q:0}};
+  }
+  Object.entries(G.pending).forEach(([cep,v])=>{
+    const k=+$("#pr_"+cep).value;
+    if(k>0){const L=k*(c.keep?0.6375:0.5125),q=clamp(v.q+(G.eq.pressoir?3:0)+(c.keep?-2:2),20,99);const t=G.vc[cep];t.q=Math.round((t.L*t.q+L*q)/(t.L+L));t.L=Math.round(t.L+L)}
+  });
+  if(c.rev)earn(c.rev,`Raisins vendus à Delaunay (${num(c.kgS)} kg)`);
+  spend(c.press,"Pressurage à la coopérative");spend(c.coop,"Vinification à façon");
+  G.pending={};
+  if(c.kgP>0){G.flags.press=true;learn("pressurage");learn("debourbage")}else learn("prix");
+  toast(c.kgP?`${num(c.L)} litres de moûts en cuve`:`Raisins vendus : ${eur(c.rev)}`);
+}
+function toReserve(){
+  const v=G.vc;let L=G.res.L,qs=G.res.L*G.res.q;
+  ["PN","PM","CH"].forEach(k=>{L+=v[k].L;qs+=v[k].L*v[k].q;v[k].L=0});
+  G.res={L:Math.round(L),q:L?Math.round(qs/L):0};
+}
+function doAssemble(){
+  const c=asCalc();if(!c.ok)return;
+  const v=G.vc,take=(k,x)=>{v[k].L=Math.max(0,v[k].L-x)};
+  take("PN",c.pn);take("PM",c.pm);take("CH",c.ch);G.res.L=Math.max(0,G.res.L-c.rs);
+  spend(c.cost,"Tirage");G.days-=c.days;
+  const name=($("#asName").value||"").trim()||"Cuvée "+v.vintage;
+  G.lots.push({id:G.uid++,name,type:c.type,vintage:v.vintage,b:c.btl,q:c.q,age:0,min:c.type==="MIL"?36:15,style:G.malo[v.vintage]==null?"":(G.malo[v.vintage]?"rond":"vif")});
+  G.flags.tirage=true;if(c.type==="MIL")G.flags.mil=true;
+  learn("assemblage");learn("tirage");if(c.rs)learn("reserve");learn({ROSE:"rose",BDB:"bdb",MIL:"millesime",BSA:"lattes"}[c.type]);
+  toast(`${num(c.btl)} bouteilles de « ${name} » en cave`);
+}
+function doDegorg(){
+  const c=dgCalc();if(!c||!c.ok)return;
+  spend(c.cost,"Dégorgement et habillage");G.days-=c.days;c.lot.b-=c.n;
+  const ex=G.fin.find(f=>f.name===c.lot.name&&f.dos===c.dos);
+  if(ex){ex.q=Math.round((ex.q*ex.b+c.q*c.n)/(ex.b+c.n));ex.b+=c.n}else G.fin.push({name:c.lot.name,type:c.lot.type,dos:c.dos,b:c.n,q:c.q});
+  G.lots=G.lots.filter(l=>l.b>0);G.flags.degorg=true;
+  learn("remuage");learn("degorg");learn("dosage");if(c.dos==="Brut nature")learn("bnature");
+  toast(`${num(c.n)} bouteilles prêtes à vendre`);
+}
+
+/* ================= commerce ================= */
+function takeFin(n,dos,minQ,dry){
+  const el=G.fin.filter(f=>(!dos||f.dos===dos)&&f.q>=(minQ||0)&&f.b>0);
+  if(minQ)el.sort((a,b)=>b.q-a.q);
+  let left=n,rev=0,qs=0;const per=[];
+  for(const f of el){if(left<=0)break;const t=Math.min(left,f.b);left-=t;qs+=t*f.q;per.push([f,t]);rev+=t*qf(f.q)*TMULT[f.type]}
+  if(!dry){per.forEach(([f,t])=>f.b-=t);G.fin=G.fin.filter(f=>f.b>0)}
+  const sold=n-left;return {sold,rev,avgQ:sold?qs/sold:0};
+}
+function deliver(i){
+  const o=G.offers[i];const chk=takeFin(o.n,o.dos,o.minQ,true);if(chk.sold<o.n)return;
+  const r=takeFin(o.n,o.dos,o.minQ,false);const v=Math.round(r.rev*o.p);
+  earn(v,`${o.c} (${num(o.n)} btl)`);G.rep=clamp(G.rep+o.rep,0,100);G.brandSold+=o.n;G.offers.splice(i,1);
+  toast(`Livré : +${eur(v)}`);
+}
+function directDemand(){
+  const base=G.eq.marque?(50+G.rep*10+(G.eq.web?140:0)+(G.eq.caveau?260:0)):30;
+  const seas=[.6,.6,.8,.9,1,1.2,1.2,1,.9,1,1.6,2.8][G.m];
+  const aq=G.fin.length?G.fin.reduce((a,f)=>a+f.q*f.b,0)/Math.max(1,finCount()):55;
+  return Math.round(base*seas*Math.pow(26/G.price,1.8)*(0.7+aq/200));
+}
+function genOffers(n){
+  const pool=OFF.filter(o=>G.rep>=o.r&&(!o.months||o.months.includes(G.m))&&!G.offers.some(x=>x.k===o.id));
+  for(let i=0;i<n&&pool.length;i++){
+    const o=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+    G.offers.push({k:o.id,c:o.c,d:o.d,p:Math.round(o.p*rnd(.93,1.08)*2)/2,n:Math.round(ri(o.q[0],o.q[1])/10)*10,minQ:o.minQ||0,dos:o.dos||null,rep:o.rep,exp:am()+1});
+  }
+}
+
+/* ================= fin de mois ================= */
+function endMonth(){
+  const m=G.m,news=[];
+  const own=owned();
+  // travaux oubliés
+  own.forEach(p=>{const s=G.pc[p.id];
+    TASKS.forEach(t=>{
+      if(t.id==="vend"||t.monthly)return;
+      if(t.m[t.m.length-1]===m&&!s.done[t.id]){const x=t.miss;if(x.y)s.ym*=1+x.y;if(x.q)s.q+=x.q;if(x.h)s.health+=x.h;news.push(`${p.n} : travail oublié (${t.n.toLowerCase()}). ${x.y?"Récolte réduite. ":""}${x.q?"Qualité en baisse. ":""}${x.h?"Vigne affaiblie.":""}`)}
+    });
+    s.untreated=TASKS[2].m.includes(m)&&!s.done["trait"+m];
+  });
+  // météo
+  if(m===3&&Math.random()<0.2){const loss=rnd(.2,.45)*(G.eq.antigel?0.5:1);own.forEach(p=>G.pc[p.id].ym*=1-loss*rnd(.8,1.2));news.push(`Gel de printemps : une nuit à -3 °C a grillé des bourgeons (environ ${Math.round(loss*100)} % de récolte en moins)${G.eq.antigel?", limité par ta protection antigel":""}.`);learn("gel")}
+  if(m===5){const r=Math.random();if(r<0.15){const l=rnd(.08,.18);own.forEach(p=>G.pc[p.id].ym*=1-l);news.push("Floraison sous la pluie : de la coulure, moins de baies.");learn("floraison")}else if(r<0.45){own.forEach(p=>G.pc[p.id].ym*=1.05);G.vint.bonus+=3;news.push("Belle floraison sous le soleil : la récolte s'annonce généreuse.");learn("floraison")}}
+  if(m>=4&&m<=7)own.forEach(p=>{const s=G.pc[p.id];const risk=s.untreated?0.45:0.05;if(Math.random()<risk){s.health=clamp(s.health-rnd(10,20),0,100);s.ym*=1-rnd(.05,.15);news.push(`${p.n} : ${m<=5?"le mildiou":"l'oïdium"} attaque${s.untreated?", la parcelle n'était pas protégée ce mois-ci":""}.`);learn("trait")}});
+  if((m===6||m===7)&&Math.random()<0.1){const hit=own[Math.floor(Math.random()*own.length)];if(hit){const l=rnd(.15,.4);G.pc[hit.id].ym*=1-l;news.push(`Orage de grêle sur ${hit.n} : environ ${Math.round(l*100)} % de raisins perdus.`)}}
+  if(m===7){const r=Math.random();if(r<0.15){own.forEach(p=>G.pc[p.id].ym*=0.95);news.push("Canicule d'août : raisins très mûrs, un peu d'échaudage.")}else if(r<0.4){G.vint.bonus+=4;news.push("Été idéal : nuits fraîches, journées chaudes, maturité parfaite.")}
+    G.cap=ri(100,120)*100;G.spot=+rnd(6.6,8.6).toFixed(2);news.push(`Ban des vendanges : rendement autorisé ${num(G.cap)} kg/ha. Prix du raisin sur le marché : ${eur2(G.spot)} le kilo.`);learn("ban")}
+  if(m===8){const left=own.filter(p=>!G.pc[p.id].harvested);left.forEach(p=>news.push(`${p.n} n'a pas été vendangée : les raisins sont perdus.`));
+    own.forEach(p=>G.pc[p.id].harvested=true);
+    const qs=G.vint.qs||[];const aq=qs.length?qs.reduce((a,b)=>a+b,0)/qs.length:50;G.vintages[G.year]={q:Math.round(aq),exc:G.vint.bonus>=6||aq>=72};
+    if(G.vintages[G.year].exc)news.push(`Le millésime ${G.year} est jugé exceptionnel : tu pourras en faire un champagne millésimé.`)}
+  if(m===9&&Object.keys(G.pending).length){let kg=0;Object.values(G.pending).forEach(v=>kg+=v.kg);const v=Math.round(kg*grapePrice()*0.85);earn(v,"Raisins vendus en urgence");G.pending={};news.push(`Raisins non pressés vendus en urgence à Delaunay, 15 % sous le prix : ${eur(v)}.`)}
+  if(m===5&&G.vc.vintage===G.year-1&&["PN","PM","CH"].some(k=>G.vc[k].L>0)){toReserve();news.push(`Les vins clairs ${G.vc.vintage} non utilisés rejoignent tes vins de réserve (${num(G.res.L)} L).`);learn("reserve")}
+  own.forEach(p=>{const s=G.pc[p.id];if(!s.untreated&&m>=3&&m<=7)s.health=clamp(s.health+1,0,100);s.health=clamp(s.health,0,100)});
+  // concours
+  if(m===4&&G.concours){G.concours=false;const best=G.fin.length?Math.max(...G.fin.map(f=>f.q)):0;
+    if(best>=75){G.rep=clamp(G.rep+8,0,100);G.flags.gold=true;news.push("Médaille d'or au concours des vignerons ! +8 de réputation.")}
+    else if(best>=68){G.rep=clamp(G.rep+4,0,100);news.push("Médaille d'argent au concours. +4 de réputation.")}else news.push("Pas de médaille cette fois : le jury attend une qualité de 68 au moins.")}
+  // vieillissement
+  G.lots.forEach(l=>l.age++);
+  // ventes directes
+  const dem=directDemand(),n=Math.min(dem,finCount());
+  if(n>0){takeFin(n,null,0,false);earn(n*G.price,`Ventes directes (${num(n)} btl à ${eur(G.price)})`);if(G.eq.marque){G.brandSold+=n;G.rep=clamp(G.rep+Math.min(2,Math.floor(n/250)),0,100)}}
+  if(G.eq.caveau&&m>=5&&m<=7)G.rep=clamp(G.rep+1,0,100);
+  if(n<dem&&dem>20&&finCount()===0)news.push(`Rupture de stock : ${num(dem-n)} clients sont repartis sans bouteille.`);
+  // charges
+  if(G.pickers){spend(G.pickers,"Cueilleurs");G.pickers=0}
+  spend(LIVING_M,"Ta rémunération");
+  if(G.eq.chef)spend(CHEF_M,"Chef de culture");
+  if(G.pc.longues.own==="lease")spend(Math.round(PBY.longues.lease/12),"Fermage des Longues Raies");
+  if(G.debt>0){spend(Math.round(G.debt*RATE/12),"Intérêts bancaires");const r=Math.min(G.debt,Math.round(G.debt*0.1/12));spend(r,"Remboursement du capital",true);G.debt-=r}
+  // offres
+  G.offers=G.offers.filter(o=>o.exp>am());
+  const lines=G.ml.slice();
+  // fin d'année
+  if(m===11){
+    const res=G.yr.rev-G.yr.op,tax=res>0?Math.round(res*0.25):0;
+    if(tax){G.cash-=tax;lines.push({l:"Impôts et cotisations sociales",v:-tax})}
+    if(G.succ>0){G.cash-=SUCC;G.succ--;lines.push({l:"Droits de succession",v:-SUCC})}
+    G.lastYear={year:G.year,rev:G.yr.rev,op:G.yr.op,tax};
+    news.push(`Bilan ${G.year} : ${eur(G.yr.rev)} de recettes, ${eur(G.yr.op)} de charges, ${eur(tax)} d'impôts.`);
+    G.yr={rev:0,op:0};
+    // nouvelle saison
+    PARCELS.forEach(p=>{const s=G.pc[p.id];const care=["taille","ebour","pal"].filter(k=>s.done[k]).length+([3,4,5,6,7].filter(mm=>s.done["trait"+mm]).length>=4?1:0);
+      s.vq=clamp(s.vq+(care>=4?2:care>=2?0:-2),30,95);s.done={};s.ym=1;s.health=clamp(s.health+20,40,100);s.q=s.vq;s.harvested=false;s.kg=0;s.meth=null});
+    G.vint={bonus:0};G.cap=null;G.spot=null;G.contract={price:+rnd(7.0,7.9).toFixed(2),signed:false};
+  }
+  // trésorerie négative
+  if(G.cash<0){const need=Math.ceil(-G.cash/10000)*10000;
+    if(G.debt+need<=maxDebt()){G.debt+=need;G.cash+=need;lines.push({l:"Prêt de trésorerie",v:need});news.push(`Découvert : la banque t'accorde un prêt de ${eur(need)}.`)}
+    else{G.over=true}}
+  // mois suivant
+  G.m++;if(G.m>11){G.m=0;G.year++}
+  G.days=DAYS+(G.eq.chef?6:0);G.ml=[];
+  if(G.eq.marque)genOffers(1+(G.m>=9?1:0)+(Math.random()<0.4?1:0));
+  G.report={title:`Fin ${MOIS[m]} → ${Mois(G.m)} ${G.year}`,news,lines};
+  applySeason();save();checkMissions();
+  curLoc=G.over?"over":"report";renderSheet();$("#sheet").hidden=false;$("#sBody").scrollTop=0;
+}
+
+/* ================= démarrage ================= */
+function startGame(){
+  $("#intro").hidden=true;$("#hud").hidden=false;$("#joy").hidden=false;
+  $("#load").hidden=false;
+  setTimeout(()=>{
+    init3D();applySeason();started=true;$("#load").hidden=true;updHUD();
+    if(!G.learned.length){learn("crus")}
+  },30);
+}
+(function boot(){
+  if(typeof THREE==="undefined"){$("#load").textContent="Impossible de charger le moteur 3D. Vérifie ta connexion puis recharge la page.";return}
+  $("#load").hidden=true;$("#intro").hidden=false;
+  const s=load();
+  if(s&&!s.over){const b=$("#bCont");b.hidden=false;b.textContent=`Continuer : ${s.name}, ${MOIS[s.m]} ${s.year}`;b.onclick=()=>{G=s;startGame()}}
+  $("#bStart").onclick=()=>{G=newState(($("#house").value||"").trim()||"Champagne des Coteaux");save();startGame()};
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
