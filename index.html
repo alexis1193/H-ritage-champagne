@@ -2,22 +2,46 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#2b2118" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ctext y=%2726%27 font-size=%2726%27%3E🍇%3C/text%3E%3C/svg%3E" />
   <title>Héritage en Champagne</title>
-  <style>
-    html,body{margin:0;height:100%;background:#2b2118;color:#f6ecd2;font-family:Georgia,serif}
-    #accueil{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;
-      padding-top:max(24px,env(safe-area-inset-top));background:linear-gradient(#e9dcae,#8aa05a 70%,#4d6a35);color:#2b2118}
-    h1{font-size:clamp(28px,7vw,56px);margin:0 0 12px}
-    p{font-size:18px;margin:4px 0}
-  </style>
 </head>
 <body>
-  <div id="accueil">
-    <h1>Héritage en Champagne</h1>
-    <p>Saint-Aubin-les-Craies, vallée de la Marne</p>
-    <p id="statut">Chargement…</p>
+  <canvas id="monde" aria-label="Village de Saint-Aubin-les-Craies"></canvas>
+  <div id="zone-tactile"></div>
+  <div id="joystick"><div id="pouce"></div></div>
+
+  <header id="barre">
+    <span id="date">Janv. 2027</span>
+    <span id="jours">⚒ 10 j</span>
+    <span id="tresorerie">40 000 €</span>
+    <button id="btn-menu" aria-label="Menu">☰</button>
+  </header>
+
+  <canvas id="minicarte" aria-label="Mini-carte, touchez pour ouvrir la carte"></canvas>
+
+  <div id="action-conteneur" hidden>
+    <span id="action-nom"></span>
+    <button id="action" aria-label="Action"><span id="action-icone"></span></button>
   </div>
+
+  <div id="notif" role="status" aria-live="polite"></div>
+
+  <section id="panneau" hidden>
+    <div class="panneau-tete"><h2 id="panneau-titre">Menu</h2><button id="panneau-fermer" aria-label="Fermer">✕</button></div>
+    <div id="panneau-corps"></div>
+  </section>
+
+  <section id="carte" hidden>
+    <div class="panneau-tete"><h2>Saint-Aubin-les-Craies</h2><button id="carte-fermer" aria-label="Fermer la carte">✕</button></div>
+    <div id="carte-corps">
+      <canvas id="carte-canvas"></canvas>
+      <div id="carte-lieux"></div>
+    </div>
+  </section>
+
+  <div id="chargement">Héritage en Champagne<small>Chargement du village…</small></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

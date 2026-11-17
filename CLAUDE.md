@@ -16,4 +16,5 @@ Utilisateur : Alexis, non développeur, travaille depuis son téléphone. Expliq
 - Tous les textes éducatifs sont relus par Alexis avant publication.
 
 ## Commandes
+- `npm run captures` : captures Playwright (après `npm run build`) dans `captures/`, à regarder une par une. Navigateur préinstallé utilisé via /opt/pw-browsers/chromium (ne pas réinstaller Playwright). Le FPS mesuré en rendu logiciel n est pas représentatif d un téléphone.
 - `npm run dev` : serveur local · `npm run build` : build · `npm test` : tests Vitest · `npm run typecheck`
