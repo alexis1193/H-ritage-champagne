@@ -1,20 +1,33 @@
 import './style.css';
-import { PerspectiveCamera, Scene, WebGLRenderer } from 'three';
+import { ACESFilmicToneMapping, PCFSoftShadowMap, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
 import { construireMonde } from './world/monde';
 import { hauteurTerrain } from './world/terrain';
 import { LIEUX, pointArrivee, type Lieu } from './world/lieux';
 import { Joueur } from './joueur';
 import { Controles } from './controles';
 import { Interface } from './ui';
+import { DIRECTION_SOLEIL as DIR } from './world/ciel';
 
 const canvas = document.getElementById('monde') as HTMLCanvasElement;
+const params = new URLSearchParams(location.search);
 const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+// Qualité : écran tactile = plus léger par défaut ; ?qualite=haute ou ?qualite=basse pour forcer.
+const tactile = matchMedia('(pointer: coarse)').matches;
+const qualite = params.get('qualite') ?? (tactile ? 'moyenne' : 'haute');
+const TAILLE_OMBRE = qualite === 'haute' ? 2048 : 1024;
+const RATIO_MAX = qualite === 'haute' ? 2 : qualite === 'moyenne' ? 1.5 : 1;
+let ratio = Math.min(window.devicePixelRatio, RATIO_MAX);
+renderer.setPixelRatio(ratio);
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = PCFSoftShadowMap;
+renderer.toneMapping = ACESFilmicToneMapping; // couleurs « cinéma », gestion sRGB par défaut
+renderer.toneMappingExposure = 0.3;
 
 const scene = new Scene();
-const camera = new PerspectiveCamera(55, 1, 0.5, 500);
-const monde = construireMonde(scene);
+const camera = new PerspectiveCamera(55, 1, 0.5, 1500);
+const monde = construireMonde(scene, renderer, TAILLE_OMBRE);
+const moisInitial = Math.min(11, Math.max(0, Number(params.get('mois') ?? 0) || 0));
+monde.mois(moisInitial);
 const joueur = new Joueur();
 scene.add(joueur.groupe);
 
@@ -98,14 +111,32 @@ function boucle(now: number): void {
   camera.lookAt(cible.x, lissee, cible.z);
   cx = cible.x; cz = cible.z;
 
-  monde.soleil.position.set(cx + 28, cible.y + 38, cz + 34);
-  monde.soleil.target.position.set(cx, cible.y - 1.7, cz);
+  // Ombres stables : le cadre d'ombre avance par pas d'un texel, sinon elles « nagent » quand on marche.
+  const texel = 96 / TAILLE_OMBRE;
+  const droite = new Vector3().crossVectors(new Vector3(0, 1, 0), DIR).normalize();
+  const haut = new Vector3().crossVectors(DIR, droite).normalize();
+  const c = new Vector3(cx, cible.y - 1.7, cz);
+  const a = Math.round(c.dot(droite) / texel) * texel - c.dot(droite);
+  const b = Math.round(c.dot(haut) / texel) * texel - c.dot(haut);
+  c.addScaledVector(droite, a).addScaledVector(haut, b);
+  monde.soleil.target.position.copy(c);
+  monde.soleil.position.copy(c).addScaledVector(DIR, 100);
+  monde.soleil.target.updateMatrixWorld();
+  monde.animer(now / 1000);
 
   renderer.render(scene, camera);
 
   if (now - tMini > 200) { tMini = now; if (!ui.enPause) ui.mettreAJourMini(); }
   framesFps++;
-  if (now - tFps >= 1000) { fps = framesFps; framesFps = 0; tFps = now; if (fpsEl) fpsEl.textContent = `${fps} i/s`; }
+  if (now - tFps >= 1000) {
+    fps = framesFps; framesFps = 0; tFps = now;
+    if (fpsEl) fpsEl.textContent = `${fps} i/s · ${qualite} · échelle ${ratio.toFixed(2)}`;
+    // Qualité adaptative : si le téléphone peine (< 40 i/s), on réduit la résolution ; s'il a de la marge, on la remonte.
+    if (!params.has('fixe') && !ui.enPause && now > 4000) {
+      const cible = fps < 40 ? Math.max(0.6, ratio - 0.2) : fps >= 58 ? Math.min(Math.min(devicePixelRatio, RATIO_MAX), ratio + 0.1) : ratio;
+      if (cible !== ratio) { ratio = cible; renderer.setPixelRatio(ratio); renderer.setSize(window.innerWidth, window.innerHeight, false); }
+    }
+  }
 }
 
 const fpsEl = new URLSearchParams(location.search).has('debug')
@@ -118,6 +149,7 @@ document.getElementById('chargement')?.classList.add('fini');
 (window as unknown as { __jeu: unknown }).__jeu = {
   allerA: (id: string) => { const l = LIEUX.find((x) => x.id === id); if (l) allerA(l); },
   etat: () => ({ x: joueur.x, z: joueur.z, fps, pause: ui.enPause }),
+  mois: (m: number) => monde.mois(m),
   menu: () => ui.ouvrirMenu(),
   carte: () => ui.ouvrirCarte(),
   fermer: () => ui.fermerTout(),

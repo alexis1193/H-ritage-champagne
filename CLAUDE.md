@@ -17,4 +17,5 @@ Utilisateur : Alexis, non développeur, travaille depuis son téléphone. Expliq
 
 ## Commandes
 - `npm run captures` : captures Playwright (après `npm run build`) dans `captures/`, à regarder une par une. Navigateur préinstallé utilisé via /opt/pw-browsers/chromium (ne pas réinstaller Playwright). Le FPS mesuré en rendu logiciel n est pas représentatif d un téléphone.
+- Options d adresse du jeu : `?debug` (compteur d images/s), `?mois=0..11` (saison), `?qualite=basse|moyenne|haute`, `?fixe` (désactive la qualité adaptative, utilisé par les captures).
 - `npm run dev` : serveur local · `npm run build` : build · `npm test` : tests Vitest · `npm run typecheck`

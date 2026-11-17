@@ -4,15 +4,16 @@ html, body { margin:0; height:100%; overflow:hidden; background:var(--fond); col
   font:16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overscroll-behavior:none; }
 body { position:fixed; inset:0; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
 canvas#monde { position:fixed; inset:0; width:100%; height:100%; display:block; }
-#zone-tactile { position:fixed; inset:0; touch-action:none; }
+#zone-tactile { position:fixed; inset:0; touch-action:none; -webkit-user-select:none; }
+html, body, canvas { touch-action:none; }
 button { font:inherit; font-weight:700; color:var(--creme); background:rgba(43,33,24,.85); border:2px solid var(--or);
   border-radius:12px; min-height:44px; min-width:44px; padding:0 14px; cursor:pointer; }
 button:active { background:#4a382a; }
 
 #joystick { position:fixed; left:0; top:0; width:110px; height:110px; border-radius:50%; pointer-events:none;
-  border:3px solid rgba(255,255,255,.55); background:rgba(255,255,255,.12); opacity:0; transition:opacity .12s; z-index:5; }
+  border:4px solid rgba(255,255,255,.95); background:rgba(20,15,10,.28); box-shadow:0 0 0 2px rgba(0,0,0,.55), inset 0 0 0 2px rgba(0,0,0,.35); opacity:0; transition:opacity .12s; z-index:5; }
 #joystick.visible { opacity:1; }
-#pouce { position:absolute; left:35px; top:35px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.75); }
+#pouce { position:absolute; left:35px; top:35px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.95); border:3px solid rgba(0,0,0,.55); }
 
 #barre { position:fixed; top:0; left:0; right:0; z-index:10; display:flex; align-items:center; gap:14px;
   height:calc(var(--barre) + env(safe-area-inset-top)); padding:env(safe-area-inset-top) max(8px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));

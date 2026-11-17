@@ -20,16 +20,29 @@ export class Controles {
   private readonly clavier = new Set<string>();
   private readonly RAYON = 55; // joystick de 110 px de diamètre
 
-  constructor(private readonly zone: HTMLElement, private readonly joy: HTMLElement, private readonly pouce: HTMLElement) {
-    zone.addEventListener('pointerdown', this.bas);
-    zone.addEventListener('pointermove', this.deplacer);
-    zone.addEventListener('pointerup', this.haut);
-    zone.addEventListener('pointercancel', this.haut);
-    zone.addEventListener('wheel', (e) => { e.preventDefault(); this.zoomer(e.deltaY * 0.02); }, { passive: false });
+  constructor(zone: HTMLElement, private readonly joy: HTMLElement, private readonly pouce: HTMLElement) {
+    // Doigts : événements tactiles natifs (les plus fiables sur téléphone).
+    const liste = (e: TouchEvent, f: (id: number, x: number, y: number) => void): void => {
+      e.preventDefault();
+      for (const t of Array.from(e.changedTouches)) f(t.identifier, t.clientX, t.clientY);
+    };
+    const opts = { passive: false } as const;
+    zone.addEventListener('touchstart', (e) => liste(e, this.bas), opts);
+    zone.addEventListener('touchmove', (e) => liste(e, this.deplacer), opts);
+    zone.addEventListener('touchend', (e) => liste(e, this.haut), opts);
+    zone.addEventListener('touchcancel', (e) => liste(e, this.haut), opts);
+    // Souris et stylet (ordinateur) : événements pointeur ; les doigts sont ignorés ici pour ne pas compter deux fois.
+    const MOUSE = -1;
+    zone.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') { zone.setPointerCapture(e.pointerId); this.bas(MOUSE, e.clientX, e.clientY); } });
+    zone.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') this.deplacer(MOUSE, e.clientX, e.clientY); });
+    const finSouris = (e: PointerEvent): void => { if (e.pointerType !== 'touch') this.haut(MOUSE, e.clientX, e.clientY); };
+    zone.addEventListener('pointerup', finSouris);
+    zone.addEventListener('pointercancel', finSouris);
+    zone.addEventListener('wheel', (e) => { e.preventDefault(); this.zoomer(e.deltaY * 0.03); }, { passive: false });
     zone.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', (e) => this.clavier.add(e.key.toLowerCase()));
     window.addEventListener('keyup', (e) => this.clavier.delete(e.key.toLowerCase()));
-    window.addEventListener('blur', () => this.clavier.clear());
+    window.addEventListener('blur', () => { this.clavier.clear(); this.relacher(); });
   }
 
   private zoomer(delta: number): void {
@@ -40,25 +53,24 @@ export class Controles {
     return x < window.innerWidth * 0.5 && y > window.innerHeight * 0.5;
   }
 
-  private readonly bas = (e: PointerEvent): void => {
+  private readonly bas = (id: number, x: number, y: number): void => {
     if (!this.actif) return;
-    this.zone.setPointerCapture(e.pointerId);
-    const role = this.joyId === null && this.dansZoneJoystick(e.clientX, e.clientY) ? 'joy' : 'cam';
-    this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY, role });
+    const role = this.joyId === null && this.dansZoneJoystick(x, y) ? 'joy' : 'cam';
+    this.touches.set(id, { x, y, role });
     if (role === 'joy') {
-      this.joyId = e.pointerId;
-      this.joyOrigine = { x: e.clientX, y: e.clientY };
-      this.joy.style.transform = `translate(${e.clientX - this.RAYON}px, ${e.clientY - this.RAYON}px)`;
+      this.joyId = id;
+      this.joyOrigine = { x, y };
+      this.joy.style.transform = `translate(${x - this.RAYON}px, ${y - this.RAYON}px)`;
       this.joy.classList.add('visible');
       this.pouce.style.transform = 'translate(0px, 0px)';
     } else {
       const now = performance.now();
       const d = this.dernierTap;
-      if (now - d.t < 320 && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 30) {
+      if (now - d.t < 320 && Math.hypot(x - d.x, y - d.y) < 30) {
         this.surRecentrer?.();
         this.dernierTap = { t: 0, x: 0, y: 0 };
       } else {
-        this.dernierTap = { t: now, x: e.clientX, y: e.clientY };
+        this.dernierTap = { t: now, x, y };
       }
       this.pincement = this.distanceDoigts();
     }
@@ -70,15 +82,15 @@ export class Controles {
     return Math.hypot(cams[0].x - cams[1].x, cams[0].y - cams[1].y);
   }
 
-  private readonly deplacer = (e: PointerEvent): void => {
-    const t = this.touches.get(e.pointerId);
+  private readonly deplacer = (id: number, x: number, y: number): void => {
+    const t = this.touches.get(id);
     if (!t || !this.actif) return;
-    const dx = e.clientX - t.x;
-    const dy = e.clientY - t.y;
-    t.x = e.clientX; t.y = e.clientY;
+    const dx = x - t.x;
+    const dy = y - t.y;
+    t.x = x; t.y = y;
     if (t.role === 'joy') {
-      let vx = e.clientX - this.joyOrigine.x;
-      let vy = e.clientY - this.joyOrigine.y;
+      let vx = x - this.joyOrigine.x;
+      let vy = y - this.joyOrigine.y;
       const n = Math.hypot(vx, vy);
       if (n > this.RAYON) { vx = (vx / n) * this.RAYON; vy = (vy / n) * this.RAYON; }
       this.pouce.style.transform = `translate(${vx}px, ${vy}px)`;
@@ -87,18 +99,18 @@ export class Controles {
     } else {
       const doigts = this.distanceDoigts();
       if (doigts > 0 && this.pincement > 0) {
-        this.zoomer((this.pincement - doigts) * 0.05);
+        this.zoomer((this.pincement - doigts) * 0.08);
         this.pincement = doigts;
-      } else if ([...this.touches.values()].filter((x) => x.role === 'cam').length === 1) {
+      } else if ([...this.touches.values()].filter((v) => v.role === 'cam').length === 1) {
         this.yaw -= dx * 0.006;
         this.pitch = Math.min(1.15, Math.max(0.2, this.pitch + dy * 0.004));
       }
     }
   };
 
-  private readonly haut = (e: PointerEvent): void => {
-    const t = this.touches.get(e.pointerId);
-    this.touches.delete(e.pointerId);
+  private readonly haut = (id: number, _x: number, _y: number): void => {
+    const t = this.touches.get(id);
+    this.touches.delete(id);
     if (t?.role === 'joy') {
       this.joyId = null;
       this.entree.x = 0; this.entree.y = 0;

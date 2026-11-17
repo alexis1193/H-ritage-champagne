@@ -21,7 +21,7 @@ try {
       const erreurs = [];
       page.on('pageerror', (e) => erreurs.push(e.message));
       page.on('console', (m) => { if (m.type() === 'error') erreurs.push(m.text()); });
-      await page.goto('http://localhost:4173/?debug', { waitUntil: 'load' });
+      await page.goto('http://localhost:4173/?debug&fixe', { waitUntil: 'load' });
       await page.waitForFunction(() => window.__jeu, null, { timeout: 20000 });
       await page.waitForTimeout(800);
       const p = (s) => `${sortie}/${w}x${h}-${nom}-${s}.png`;
@@ -47,6 +47,11 @@ try {
       await page.waitForTimeout(250);
       await page.screenshot({ path: p('5-carte') });
       await page.evaluate(() => window.__jeu.fermer());
+      for (const [mois, nomMois, lieu] of [[5, 'ete', 'mont_benoit'], [8, 'septembre', 'crayeres'], [9, 'automne', 'hautes_vignes']]) {
+        await page.evaluate(([m, l]) => { window.__jeu.mois(m); window.__jeu.allerA(l); }, [mois, lieu]);
+        await page.waitForTimeout(600);
+        await page.screenshot({ path: p(`6-${nomMois}`) });
+      }
 
       // mesures de mise en page : surface du monde visible, tailles minimales
       const m = await page.evaluate(() => {
