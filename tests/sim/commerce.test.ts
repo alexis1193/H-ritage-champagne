@@ -52,27 +52,27 @@ describe('offres des clients', () => {
     expect(prixOffre(19, 60, 1)).toBeCloseTo(19 * 1.05); expect(prixOffre(19, 60, 1.35)).toBeCloseTo(19 * 1.05 * 1.35);
   });
   it('exigences : dosage (brut), mois (mariages mars-août), qualité minimale', () => {
-    const p = avecMarque(); p.offres.push({ id: 1, clientId: 'caviste_bruxelles', qte: 100, expire: 5 });
-    p.stock = [{ id: 1, n: 500, qualite: 60, cuvee: 'brut_sans_annee', dosage: 'demi-sec', moisMise: 0 }];
+    const p = avecMarque(); p.offres.push({ id: 1, clientId: 'caviste_bruxelles', qte: 100, expire: 5, essais: 0 });
+    p.stock = [{ id: 1, n: 500, qualite: 60, cuvee: 'brut_sans_annee', dosage: 'demi-sec', moisMise: 0, cout: 8, coutMatiere: 5 }];
     expect(offreRealisable(p, 1).ok).toBe(false); // demi-sec ≠ brut
     p.stock[0].dosage = 'brut'; expect(offreRealisable(p, 1).ok).toBe(true);
-    p.offres.push({ id: 2, clientId: 'mariages', qte: 100, expire: 9 }); // janvier : hors saison
+    p.offres.push({ id: 2, clientId: 'mariages', qte: 100, expire: 9, essais: 0 }); // janvier : hors saison
     expect(offreRealisable(p, 2).ok).toBe(false);
-    p.offres.push({ id: 3, clientId: 'restaurant_etoile', qte: 60, expire: 9 }); p.stock[0].dosage = 'extra brut'; p.stock[0].qualite = 63;
+    p.offres.push({ id: 3, clientId: 'restaurant_etoile', qte: 60, expire: 9, essais: 0 }); p.stock[0].dosage = 'extra brut'; p.stock[0].qualite = 63;
     expect(offreRealisable(p, 3).ok).toBe(false); p.stock[0].qualite = 64; expect(offreRealisable(p, 3).ok).toBe(true);
   });
   it('accepter : encaisse, retire le stock, change la réputation (+2 caviste ; −4 centrale d\'achat)', () => {
-    const p = avecMarque(); p.stock = [{ id: 1, n: 3000, qualite: 60, cuvee: 'brut_sans_annee', dosage: 'brut', moisMise: 0 }];
-    p.offres.push({ id: 1, clientId: 'caviste_bruxelles', qte: 200, expire: 5 }, { id: 2, clientId: 'centrale', qte: 1500, expire: 5 });
+    const p = avecMarque(); p.stock = [{ id: 1, n: 3000, qualite: 60, cuvee: 'brut_sans_annee', dosage: 'brut', moisMise: 0, cout: 8, coutMatiere: 5 }];
+    p.offres.push({ id: 1, clientId: 'caviste_bruxelles', qte: 200, expire: 5, essais: 0 }, { id: 2, clientId: 'centrale', qte: 1500, expire: 5, essais: 0 });
     const t = p.tresorerie; const r0 = p.reputation;
     expect(accepterOffre(p, 1).ok).toBe(true);
     expect(p.tresorerie - t).toBeCloseTo(200 * 19 * 1.05); expect(p.reputation).toBe(r0 + 2); expect(p.stock[0].n).toBe(2800);
     accepterOffre(p, 2); expect(p.reputation).toBe(Math.max(0, r0 + 2 - 4));
   });
   it('la première vente de bouteilles faites par le joueur est notée (pas les bouteilles de la coopérative)', () => {
-    const p = avecMarque(); p.stock = [{ id: 1, n: 5, qualite: 60, cuvee: 'brut_sans_annee', dosage: 'brut', moisMise: -1 }]; ventesDirectes(p);
+    const p = avecMarque(); p.stock = [{ id: 1, n: 5, qualite: 60, cuvee: 'brut_sans_annee', dosage: 'brut', moisMise: -1, cout: 8, coutMatiere: 5 }]; ventesDirectes(p);
     expect(p.premiereVenteMois).toBeNull();
-    allerAu(p, 5); p.stock = [{ id: 2, n: 200, qualite: 60, cuvee: 'brut_sans_annee', dosage: 'brut', moisMise: 3 }]; ventesDirectes(p);
+    allerAu(p, 5); p.stock = [{ id: 2, n: 200, qualite: 60, cuvee: 'brut_sans_annee', dosage: 'brut', moisMise: 3, cout: 8, coutMatiere: 5 }]; ventesDirectes(p);
     expect(p.premiereVenteMois).toBe(p.moisAbs);
   });
 });
@@ -84,13 +84,13 @@ describe('Maison Delaunay, concours', () => {
     const q = neuve(sansMeteo); allerAu(q, 7); expect(signerContrat(q).ok).toBe(false);
   });
   it('rachat sur lattes : 11 € × (0,75 + qualité/200), sans réputation', () => {
-    const p = neuve(); p.lattes.push({ id: 7, n: 1000, qualite: 60, cuvee: 'brut_sans_annee', moisTirage: 0, millesime: null, age: 3 });
+    const p = neuve(); p.lattes.push({ id: 7, n: 1000, qualite: 60, cuvee: 'brut_sans_annee', moisTirage: 0, millesime: null, age: 3, cout: 6, coutMatiere: 3 });
     const t = p.tresorerie; vendreSurLattes(p, 7, 400); expect(p.tresorerie - t).toBeCloseTo(400 * 11 * 1.05); expect(p.lattes[0].n).toBe(600);
   });
   it('concours : 400 € en mars ou avril ; en mai or (75+, +8) ou argent (68+, +4)', () => {
     const p = neuve(sansMeteo); expect(inscrireConcours(p).ok).toBe(false);
     allerAu(p, 2); const t = p.tresorerie; expect(inscrireConcours(p).ok).toBe(true); expect(t - p.tresorerie).toBe(400);
-    p.stock = [{ id: 1, n: 10, qualite: 75, cuvee: 'brut_sans_annee', dosage: 'brut', moisMise: 0 }]; const r = p.reputation;
+    p.stock = [{ id: 1, n: 10, qualite: 75, cuvee: 'brut_sans_annee', dosage: 'brut', moisMise: 0, cout: 8, coutMatiere: 5 }]; const r = p.reputation;
     expect(resultatConcours(p)).toBe('or'); expect(p.reputation).toBe(r + 8);
     p.stock[0].qualite = 68; p.reputation = 10; expect(resultatConcours(p)).toBe('argent'); expect(p.reputation).toBe(14);
     p.stock[0].qualite = 67; expect(resultatConcours(p)).toBeNull();

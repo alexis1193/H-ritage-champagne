@@ -5,6 +5,7 @@ export * from './rng';
 export * from './vigne';
 export * from './vin';
 export * from './commerce';
+export * from './rentabilite';
 export * from './finance';
 export * from './mois';
 export * from './sauvegarde';

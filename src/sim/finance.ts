@@ -120,9 +120,12 @@ export function finDAnnee(p: Partie): Bilan {
     annee: anneeCourante(p), ca: Math.round(ca), charges: Math.round(sorties), resultat: Math.round(p.resultatAn), impots: Math.round(p.impotsPayesAn),
     tresorerie: Math.round(p.tresorerie), reputation: p.reputation, emprunt: Math.round(p.emprunt), patrimoine: patrimoine(p),
     bouteillesVendues: p.bouteillesVendues, faillite: p.faillite,
+    coutRevientMoyen: p.bouteillesVendues ? Math.round((p.coutVentesAn / p.bouteillesVendues) * 100) / 100 : 0,
+    margeMoyenne: p.bouteillesVendues ? Math.round(((p.caBouteillesAn - p.coutVentesAn) / p.bouteillesVendues) * 100) / 100 : 0,
   };
   p.bilans.push(bilan);
-  p.compteAn = { recettes: {}, depenses: {} }; p.resultatAn = 0; p.impotsPayesAn = 0; p.bouteillesVendues = 0;
+  p.compteAn = { recettes: {}, depenses: {} }; p.resultatAn = 0; p.impotsPayesAn = 0; p.bouteillesVendues = 0; p.coutVentesAn = 0; p.caBouteillesAn = 0;
+  p.bouteillesTireesPrec = p.bouteillesTireesAn; p.bouteillesTireesAn = 0;
   noter(p, `Bilan ${bilan.annee} : résultat ${bilan.resultat} €, trésorerie ${bilan.tresorerie} €.`);
   return bilan;
 }

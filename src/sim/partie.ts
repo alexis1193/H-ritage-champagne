@@ -35,10 +35,10 @@ export function creerPartie(params: Params = PARAMS, graine = 1): Partie {
     plafondHa: params.rendement.plafondMax, prixMarche: (params.raisins.prixMarcheMin + params.raisins.prixMarcheMax) / 2,
     prixContratPropose: (params.raisins.prixContratMin + params.raisins.prixContratMax) / 2, contratPrix: null,
     bonusMillesime: 0, millesimes: [], litresCampagne: 0, concoursInscrit: false,
-    bilans: [], faillite: false, prochainId: 1, cueilletteAPayer: 0, capex: 0, terres: 0, actions: 0, journal: [],
+    bilans: [], faillite: false, prochainId: 1, coutVigneAn: 0, bouteillesTireesAn: 0, bouteillesTireesPrec: 0, coutVentesAn: 0, caBouteillesAn: 0, cueilletteAPayer: 0, capex: 0, terres: 0, actions: 0, journal: [],
   };
-  for (const v of d.vinsClairs) p.lots.push({ id: nouvelId(p), cepage: v.cepage, litres: v.litres, qualite: d.qualiteVinsClairs, annee: d.annee - 1, rouge: v.cepage === 'pinot noir', style: 'vif', reserve: false });
-  p.stock.push({ id: nouvelId(p), n: d.stockBouteilles.n, qualite: d.stockBouteilles.qualite, cuvee: 'brut_sans_annee', dosage: d.stockBouteilles.dosage, moisMise: -1 });
+  for (const v of d.vinsClairs) p.lots.push({ id: nouvelId(p), cepage: v.cepage, litres: v.litres, qualite: d.qualiteVinsClairs, annee: d.annee - 1, rouge: v.cepage === 'pinot noir', style: 'vif', reserve: false, cout: d.coutLitreVinsClairs, coutMatiere: d.coutMatiereLitreVinsClairs });
+  p.stock.push({ id: nouvelId(p), n: d.stockBouteilles.n, qualite: d.stockBouteilles.qualite, cuvee: 'brut_sans_annee', dosage: d.stockBouteilles.dosage, moisMise: -1, cout: d.stockBouteilles.cout, coutMatiere: d.stockBouteilles.coutMatiere });
   // Premier mois : le contrat de la Maison Delaunay est proposé en janvier (prix tiré au hasard).
   proposerContrat(p);
   return p;
@@ -71,3 +71,6 @@ export const placesLibres = (p: Partie): number => p.cavePlaces - totalBouteille
 export const lotParId = (p: Partie, id: number): Lot | undefined => p.lots.find((l) => l.id === id);
 
 export const ajouterReputation = (p: Partie, v: number): void => { p.reputation = Math.max(0, Math.min(100, p.reputation + v)); };
+
+/** Valeur d'un jour de travail du joueur : son salaire divisé par ses jours de travail (sert à chiffrer les travaux faits soi-même). */
+export const valeurJour = (p: Partie): number => p.params.charges.salaireMois / p.params.temps.joursParMois;

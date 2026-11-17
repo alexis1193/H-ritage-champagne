@@ -1,5 +1,5 @@
 import {
-  accepterOffre, apercuAssemblage, choisirMalo, degorger, demandeDirecte, embaucherChef, emprunter, faireTravail, finDuMois, fixerPrixPublic,
+  accepterOffre, evaluerOffre, analyseRentabilite, apercuAssemblage, choisirMalo, degorger, demandeDirecte, embaucherChef, emprunter, faireTravail, finDuMois, fixerPrixPublic,
   inscrireConcours, investir, louerParcelle, moisCourant, anneeCourante, placesLibres, presserRaisins, qualiteMoyenneStock, signerContrat,
   systemeIdeal, tirer, travauxDus, vendreRaisins, anJeu, CLIENTS, stockTotal, offreRealisable, prixOffre, client,
 } from './index';
@@ -90,7 +90,10 @@ function offres(p: Partie, accepteCentrale: boolean): void {
   for (const o of triees) {
     const cl = client(o.clientId);
     if (!cl || (cl.id === 'centrale' && !accepteCentrale)) continue;
-    if (offreRealisable(p, o.id).ok) accepterOffre(p, o.id);
+    if (!offreRealisable(p, o.id).ok) continue;
+    const ev = evaluerOffre(p, o.id);
+    if (ev.ok && ev.prixReference < ev.coutRevient * 1.05) continue; // à ce prix on perd de l'argent : on refuse
+    accepterOffre(p, o.id);
   }
 }
 
@@ -101,7 +104,8 @@ function fixerPrix(p: Partie): void {
   const cible = stock / 6;
   let prix = 20;
   for (let x = 45; x >= 20; x -= 1) { prix = x; if (demandeDirecte(p, x) >= cible) break; }
-  fixerPrixPublic(p, prix);
+  const plancher = Math.ceil(analyseRentabilite(p).coutDirectMoyen * 1.1);
+  fixerPrixPublic(p, Math.min(60, Math.max(prix, plancher)));
 }
 
 function plan(p: Partie, r: Reglage): void {

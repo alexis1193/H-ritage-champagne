@@ -80,7 +80,7 @@ describe('malolactique, assemblage et tirage', () => {
     expect(r.ok).toBe(true);
     expect(p.lattes[0].n).toBe(4000); expect(t - p.tresorerie).toBeCloseTo(7200);
     expect(placesLibres(p)).toBe(8000 - 600 - 4000);
-    allerAu(p, 6); p.lots.push({ id: 99, cepage: 'meunier', litres: 100, qualite: 50, annee: 2027, rouge: false, style: 'vif', reserve: false });
+    allerAu(p, 6); p.lots.push({ id: 99, cepage: 'meunier', litres: 100, qualite: 50, annee: 2027, rouge: false, style: 'vif', reserve: false, cout: 4, coutMatiere: 3 });
     expect(tirer(p, [{ lotId: 99, litres: 100 }], 'brut_sans_annee').ok).toBe(false); // juillet : trop tard
   });
   it('cave pleine : refus clair', () => {
@@ -97,7 +97,7 @@ describe('malolactique, assemblage et tirage', () => {
 });
 
 describe('vieillissement, dégorgement et dosage', () => {
-  const lattes = (age: number, qualite = 60) => { const p = neuve(sansMeteo); allerAu(p, 6); p.lattes.push({ id: 50, n: 1000, qualite, cuvee: 'brut_sans_annee', moisTirage: 0, millesime: null, age }); p.jours = 10; return p; };
+  const lattes = (age: number, qualite = 60) => { const p = neuve(sansMeteo); allerAu(p, 6); p.lattes.push({ id: 50, n: 1000, qualite, cuvee: 'brut_sans_annee', moisTirage: 0, millesime: null, age, cout: 6, coutMatiere: 3 }); p.jours = 10; return p; };
   it('bonus d\'âge : +2 par tranche de 6 mois au-delà du minimum, maximum +8', () => {
     const p = neuve();
     expect(bonusAge(p, 15, 15)).toBe(0); expect(bonusAge(p, 20, 15)).toBe(0); expect(bonusAge(p, 21, 15)).toBe(2); expect(bonusAge(p, 33, 15)).toBe(6); expect(bonusAge(p, 80, 15)).toBe(8);

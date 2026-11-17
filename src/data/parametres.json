@@ -8,7 +8,9 @@
     "qualiteSouches": 52,
     "cavePlaces": 8000,
     "cuverieLitres": 0,
-    "stockBouteilles": { "n": 600, "qualite": 55, "dosage": "brut" },
+    "stockBouteilles": { "n": 600, "qualite": 55, "dosage": "brut", "cout": 9, "coutMatiere": 6 },
+    "coutLitreVinsClairs": 4.5,
+    "coutMatiereLitreVinsClairs": 3.2,
     "qualiteVinsClairs": 54,
     "vinsClairs": [
       { "cepage": "pinot noir", "litres": 1200 },
@@ -106,6 +108,7 @@
     "offresMax": 2,
     "offreDureeMois": 2,
     "rachatLattes": 11,
+    "negociation": { "prixMaxBase": 1.08, "prixMaxParReputation": 0.003, "certitude": 0.95, "refus": 1.2, "essaisMax": 2, "contreProposition": 0.98 },
     "concoursOr": 75,
     "concoursArgent": 68,
     "concoursReputationOr": 8,

@@ -166,6 +166,19 @@ Chaque travail se fait soi-même (en jours) ou par une équipe (en euros). Une p
 
 - Les offres n'arrivent qu'avec une marque déposée (statut RM), 0 à 2 par mois (au lieu de 1 à 3), valables 2 mois, une seule offre ouverte par client à la fois. Prix final = prix × (0,75 + qualité / 200) × bonus de cuvée.
 - **Vente directe** : le joueur fixe son prix public (14 à 60 €). Demande du mois = base × saison × (26 / prix)^1,8 × (0,7 + qualité moyenne / 200). Base = 30 sans marque, sinon 30 + 6 × réputation (au lieu de 50 + 10 ×), +140 avec la boutique en ligne, +260 avec le caveau.
+### Prix de revient et négociation des prix (ajout de l'étape 2)
+
+Le joueur fixe **tous** ses prix. Le jeu lui montre ce que lui coûte une bouteille pour qu'il sache si c'est rentable.
+
+- **Prix de revient direct** d'une bouteille : le raisin (travaux de la vigne : euros de l'équipe, ou jours faits soi-même valorisés au salaire ÷ jours = 200 € par jour, fermage, divisés par la récolte), plus le pressurage (0,35 €/kg à la coopérative), la vinification à façon, le tirage (1,80 €), le dégorgement (1,10 €) et le remuage (0,15 € ou un jour par 800 bouteilles). Il suit le vin de la presse à la bouteille, y compris dans les assemblages.
+- **Frais fixes** de la maison (rémunération, frais généraux, chef de culture) : répartis sur toute la récolte, qu'elle soit transformée ou vendue, donc sur chaque kg de raisin puis chaque bouteille.
+- **Coût complet** = coût direct + frais fixes : c'est le prix plancher en dessous duquel on perd de l'argent.
+- **Gain par rapport à la vente du raisin** : prix de la bouteille − coût de transformation − ce que rapporterait le raisin vendu à la Maison Delaunay. C'est ce qui dit si transformer vaut la peine.
+- **Prix conseillé** : celui qui rapporte le plus compte tenu de la demande (jamais sous le coût complet).
+- **Vente directe** : le joueur règle son prix public (14 à 60 €) ; la demande baisse quand le prix monte (formule ci-dessus).
+- **Offres des clients** : chaque client a un prix de référence pour la qualité de la bouteille (prix × (0,75 + qualité/200) × bonus de cuvée) et un prix maximum (la référence × (1,08 + 0,003 × réputation) : plus le joueur est connu, plus on le paie). Le joueur propose son prix : le client accepte à coup sûr jusqu'à 95 % de son prix maximum, tire au sort entre 95 et 120 %, refuse au-delà. Après un refus, il contre-propose ; après deux refus, il s'en va. Accepter le prix de référence réussit toujours.
+- Le **bilan annuel** indique le prix de revient moyen et la marge moyenne par bouteille vendue.
+
 - **Contrat raisins** : la Maison Delaunay propose un prix garanti jusqu'en juillet (7,00 à 7,90 €/kg). Elle rachète aussi les bouteilles sur lattes à 11 € × facteur qualité, sans réputation pour le joueur.
 - **Concours** : inscription en mars ou avril (400 €). En mai : or si qualité 75+ (+8 de réputation), argent si 68+ (+4).
 

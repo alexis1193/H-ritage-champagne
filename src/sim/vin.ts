@@ -1,4 +1,5 @@
-import { anneeCourante, cuvee, depenser, encaisser, erreur, lotParId, moisCourant, nouvelId, noter, ok, placesLibres } from './partie';
+import { anneeCourante, cuvee, depenser, encaisser, erreur, lotParId, moisCourant, nouvelId, noter, ok, placesLibres, valeurJour } from './partie';
+import { coutRaisinKg } from './vigne';
 import type { Cepage, CuveeId, Dosage, Lot, Partie, Resultat } from './types';
 
 /** Du raisin à la bouteille : pressoir, malolactique, assemblage, tirage, vieillissement, dégorgement. */
@@ -34,14 +35,16 @@ export function presserRaisins(p: Partie, cepage: Cepage, kg: number, o: Options
     if (o.garderTaille) { litres += (kg / c.kgParMarc) * c.litresTailleParMarc; qualite += c.qualiteAvecTaille; } else qualite += c.qualiteCuveeSeule;
   }
   litres = Math.round(litres);
-  if (!p.pressoir) depenser(p, kg * c.coutCooperativeKg, 'pressurage');
+  const coutRaisins = coutRaisinKg(p) * kg; // prix de revient du raisin pressé
+  let coutAtelier = 0;
+  if (!p.pressoir) { coutAtelier += kg * c.coutCooperativeKg; depenser(p, kg * c.coutCooperativeKg, 'pressurage'); }
   const avant = Math.max(0, p.litresCampagne - p.cuverieLitres);
   p.litresCampagne += litres;
   const surplus = Math.max(0, p.litresCampagne - p.cuverieLitres) - avant;
-  if (surplus > 0) depenser(p, surplus * c.coutFacon, 'vinification à façon');
+  if (surplus > 0) { coutAtelier += surplus * c.coutFacon; depenser(p, surplus * c.coutFacon, 'vinification à façon'); }
   s.kg -= kg;
   if (s.kg < 1e-6) p.raisins = p.raisins.filter((r) => r !== s);
-  p.lots.push({ id: nouvelId(p), cepage, litres, qualite: Math.max(0, qualite), annee: anneeCourante(p), rouge: !!o.rouge, style: null, reserve: false });
+  p.lots.push({ id: nouvelId(p), cepage, litres, qualite: Math.max(0, qualite), annee: anneeCourante(p), rouge: !!o.rouge, style: null, reserve: false, cout: litres > 0 ? (coutRaisins + coutAtelier) / litres : 0, coutMatiere: litres > 0 ? coutRaisins / litres : 0 });
   noter(p, `Pressé ${kg} kg de ${cepage} : ${litres} L de vin clair.`);
   p.actions++;
   return ok();
@@ -61,21 +64,21 @@ export function choisirMalo(p: Partie, lotId: number, style: 'rond' | 'vif'): Re
 
 export interface PartLot { lotId: number; litres: number }
 export interface Apercu {
-  ok: boolean; erreur?: string; litres: number; bouteilles: number; qualite: number; cout: number;
+  ok: boolean; coutMatiereBouteille: number; /** prix de revient direct par bouteille après tirage (vin + 1,80 €) */ coutBouteille: number; erreur?: string; litres: number; bouteilles: number; qualite: number; cout: number;
   bonus: { troisCepages: number; reserve: number }; partsCepage: Record<string, number>; partReserve: number; millesime: number | null;
 }
 
 /** Aperçu d'un assemblage : qualité attendue, nombre de bouteilles, coût. Ne change rien. */
 export function apercuAssemblage(p: Partie, parts: PartLot[], cuveeId: CuveeId): Apercu {
-  const a: Apercu = { ok: false, litres: 0, bouteilles: 0, qualite: 0, cout: 0, bonus: { troisCepages: 0, reserve: 0 }, partsCepage: {}, partReserve: 0, millesime: null };
+  const a: Apercu = { ok: false, coutMatiereBouteille: 0, coutBouteille: 0, litres: 0, bouteilles: 0, qualite: 0, cout: 0, bonus: { troisCepages: 0, reserve: 0 }, partsCepage: {}, partReserve: 0, millesime: null };
   const c = p.params.cave;
-  let total = 0; let somme = 0; let reserve = 0; let rouge = 0;
+  let total = 0; let somme = 0; let reserve = 0; let rouge = 0; let coutVin = 0; let coutMat = 0;
   const annees = new Set<number>(); const cepages: Record<string, number> = {};
   for (const x of parts) {
     const l = lotParId(p, x.lotId);
     if (!l) { a.erreur = 'Vin clair inconnu.'; return a; }
     if (x.litres <= 0 || x.litres > l.litres + 1e-6) { a.erreur = 'Volume impossible.'; return a; }
-    total += x.litres; somme += x.litres * l.qualite;
+    total += x.litres; somme += x.litres * l.qualite; coutVin += x.litres * l.cout; coutMat += x.litres * l.coutMatiere;
     if (l.reserve) reserve += x.litres;
     if (l.rouge) rouge += x.litres;
     annees.add(l.annee);
@@ -90,6 +93,8 @@ export function apercuAssemblage(p: Partie, parts: PartLot[], cuveeId: CuveeId):
   a.qualite = Math.max(0, Math.min(100, somme / total + a.bonus.troisCepages + a.bonus.reserve));
   a.bouteilles = Math.floor(total / c.litresParBouteille);
   a.cout = a.bouteilles * c.coutTirage;
+  a.coutBouteille = (coutVin / total) * c.litresParBouteille + c.coutTirage;
+  a.coutMatiereBouteille = (coutMat / total) * c.litresParBouteille;
   if (cuveeId === 'blanc_de_blancs') {
     const blanc = parts.every((x) => { const l = lotParId(p, x.lotId); return l && l.cepage === 'chardonnay' && !l.rouge; });
     if (!blanc) { a.erreur = 'Un blanc de blancs est 100 % chardonnay (vin blanc).'; return a; }
@@ -118,8 +123,9 @@ export function tirer(p: Partie, parts: PartLot[], cuveeId: CuveeId): Resultat &
   }
   p.lots = p.lots.filter((l) => l.litres > 1e-6);
   depenser(p, a.cout, 'tirage');
+  p.bouteillesTireesAn += a.bouteilles;
   const id = nouvelId(p);
-  p.lattes.push({ id, n: a.bouteilles, qualite: a.qualite, cuvee: cuveeId, moisTirage: p.moisAbs, millesime: a.millesime, age: 0 });
+  p.lattes.push({ id, n: a.bouteilles, qualite: a.qualite, cuvee: cuveeId, moisTirage: p.moisAbs, millesime: a.millesime, age: 0, cout: a.coutBouteille, coutMatiere: a.coutMatiereBouteille });
   noter(p, `Tirage : ${a.bouteilles} bouteilles de ${cuvee(cuveeId)?.nom ?? cuveeId}, qualité ${a.qualite.toFixed(0)}.`);
   p.actions++;
   return { ok: true, lattesId: id };
@@ -147,18 +153,20 @@ export function degorger(p: Partie, lattesId: number, n: number, dosage: Dosage)
   if (!c.moisDegorgement.includes(moisCourant(p))) return erreur('On dégorge en juillet-août et en novembre-décembre.');
   const min = cuvee(l.cuvee)?.minMois ?? 15;
   if (l.age < min) return erreur(`Trop jeune : ${l.age} mois sur lattes, ${min} au minimum.`);
-  if (p.gyropalettes) depenser(p, n * c.coutGyropalette, 'remuage');
+  let remuage = 0;
+  if (p.gyropalettes) { depenser(p, n * c.coutGyropalette, 'remuage'); remuage = c.coutGyropalette; }
   else {
     const j = Math.ceil((n / c.bouteillesParJourRemuage) * 100) / 100;
     if (j > p.jours + 1e-9) return erreur(`Remuage à la main : ${j} jours nécessaires, ${p.jours} restants.`);
     p.jours = Math.round((p.jours - j) * 100) / 100;
+    remuage = (j * valeurJour(p)) / n; // le temps de remuage a une valeur
   }
   depenser(p, n * c.coutDegorgement, 'dégorgement');
   let q = l.qualite + bonusAge(p, l.age, min);
   if (dosage === 'brut nature' && q < c.brutNatureSeuil) q += c.brutNatureMalus;
   l.n -= n;
   if (l.n === 0) p.lattes = p.lattes.filter((x) => x !== l);
-  p.stock.push({ id: nouvelId(p), n, qualite: Math.max(0, Math.min(100, q)), cuvee: l.cuvee, dosage, moisMise: p.moisAbs });
+  p.stock.push({ id: nouvelId(p), n, qualite: Math.max(0, Math.min(100, q)), cuvee: l.cuvee, dosage, moisMise: p.moisAbs, cout: l.cout + c.coutDegorgement + remuage, coutMatiere: l.coutMatiere });
   noter(p, `Dégorgé ${n} bouteilles (${dosage}), qualité ${q.toFixed(0)}.`);
   p.actions++;
   return ok();

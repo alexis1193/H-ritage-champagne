@@ -19,7 +19,7 @@ export interface Params {
   version: number;
   depart: {
     annee: number; tresorerie: number; reputation: number; santeVigne: number; qualiteSouches: number; cavePlaces: number; cuverieLitres: number;
-    stockBouteilles: { n: number; qualite: number; dosage: Dosage }; qualiteVinsClairs: number;
+    stockBouteilles: { n: number; qualite: number; dosage: Dosage; cout: number; coutMatiere: number }; qualiteVinsClairs: number; coutLitreVinsClairs: number; coutMatiereLitreVinsClairs: number;
     vinsClairs: { cepage: Cepage; litres: number }[]; successionAnnuite: number; successionAnnees: number; prixPublic: number;
   };
   parcelles: { id: string; nom: string; cepage: Cepage; ha: number; statut: Statut }[];
@@ -47,6 +47,7 @@ export interface Params {
     prixPublicMin: number; prixPublicMax: number; baseSansMarque: number; baseAvecMarque: number; baseParReputation: number;
     bonusBoutique: number; bonusCaveau: number; prixReference: number; exposantPrix: number; saison: number[];
     offresMin: number; offresMax: number; offreDureeMois: number; rachatLattes: number;
+    negociation: { prixMaxBase: number; prixMaxParReputation: number; certitude: number; refus: number; essaisMax: number; contreProposition: number };
     concoursOr: number; concoursArgent: number; concoursReputationOr: number; concoursReputationArgent: number; reputationMission: number;
   };
   meteo: {
@@ -67,15 +68,18 @@ export interface ParcelleEtat {
   faits: Record<string, boolean>; oublisAn: number; facteurRecolte: number; recolteKg: number | null; vendangee: boolean;
 }
 export interface Raisins { cepage: Cepage; kg: number; qualite: number }
-export interface Lot { id: number; cepage: Cepage; litres: number; qualite: number; annee: number; rouge: boolean; style: 'rond' | 'vif' | null; reserve: boolean }
-export interface Lattes { id: number; n: number; qualite: number; cuvee: CuveeId; moisTirage: number; millesime: number | null; age: number }
-export interface StockPret { id: number; n: number; qualite: number; cuvee: CuveeId; dosage: Dosage; moisMise: number }
-export interface Offre { id: number; clientId: string; qte: number; expire: number }
+/** `cout` : prix de revient direct (ce que la production a réellement coûté) par litre ou par bouteille. */
+export interface Lot { id: number; cepage: Cepage; litres: number; qualite: number; annee: number; rouge: boolean; style: 'rond' | 'vif' | null; reserve: boolean; cout: number; /** part du raisin dans ce prix de revient */ coutMatiere: number }
+export interface Lattes { id: number; n: number; qualite: number; cuvee: CuveeId; moisTirage: number; millesime: number | null; age: number; cout: number; coutMatiere: number }
+export interface StockPret { id: number; n: number; qualite: number; cuvee: CuveeId; dosage: Dosage; moisMise: number; cout: number; coutMatiere: number }
+export interface Offre { id: number; clientId: string; qte: number; expire: number; essais: number }
 
 export interface Comptes { recettes: Record<string, number>; depenses: Record<string, number> }
 export interface Bilan {
   annee: number; ca: number; charges: number; resultat: number; impots: number; tresorerie: number; reputation: number;
   emprunt: number; patrimoine: number; bouteillesVendues: number; faillite: boolean;
+  /** Prix de revient direct moyen des bouteilles vendues cette année, et marge moyenne par bouteille (prix de vente − prix de revient direct). */
+  coutRevientMoyen: number; margeMoyenne: number;
 }
 
 export interface Partie {
@@ -102,6 +106,7 @@ export interface Partie {
   plafondHa: number; prixMarche: number; prixContratPropose: number; contratPrix: number | null;
   bonusMillesime: number; millesimes: number[]; litresCampagne: number; concoursInscrit: boolean;
   bilans: Bilan[]; faillite: boolean; prochainId: number;
+  coutVigneAn: number; bouteillesTireesAn: number; bouteillesTireesPrec: number; coutVentesAn: number; caBouteillesAn: number;
   cueilletteAPayer: number; capex: number; terres: number; actions: number; journal: string[];
 }
 

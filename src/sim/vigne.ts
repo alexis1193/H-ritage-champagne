@@ -1,4 +1,4 @@
-import { depenser, erreur, exploitees, joursMax, moisCourant, noter, ok, parcelle, travail } from './partie';
+import { depenser, erreur, exploitees, joursMax, moisCourant, noter, ok, parcelle, travail, valeurJour } from './partie';
 import { TRAVAUX } from './params';
 import { entre, tirage } from './rng';
 import type { Cepage, Mode, ParcelleEtat, Partie, Resultat, TravailDef } from './types';
@@ -73,8 +73,10 @@ export function faireTravail(p: Partie, parcelleId: string, travailId: string, m
     const j = joursPour(t, parc.ha);
     if (j > p.jours + 1e-9) return erreur(`Il vous manque des jours (${j} nécessaires, ${p.jours} restants).`);
     p.jours = Math.round((p.jours - j) * 100) / 100;
+    p.coutVigneAn += j * valeurJour(p); // un jour de travail a une valeur (salaire ÷ jours)
   } else {
     const c = coutEquipePour(t, parc.ha, kg);
+    p.coutVigneAn += c;
     if (t.id === 'vendanges') p.cueilletteAPayer += c; // payé en fin de mois
     else depenser(p, c, 'travaux');
   }
@@ -172,7 +174,7 @@ export function nouvelleSaison(p: Partie): void {
     x.sante = Math.max(40, Math.min(98, d.santeVigne + (x.qualiteSouches - d.qualiteSouches) * 0.3));
     x.qualiteAjust = 0; x.bonusTaille = 0; x.systeme = null; x.faits = {}; x.oublisAn = 0; x.facteurRecolte = 1; x.recolteKg = null; x.vendangee = false;
   }
-  p.bonusMillesime = 0; p.concoursInscrit = false;
+  p.bonusMillesime = 0; p.concoursInscrit = false; p.coutVigneAn = 0;
 }
 
 /** 31 décembre : les souches gagnent 2 points si la vigne a été bien soignée, en perdent 2 sinon. */
@@ -184,3 +186,12 @@ export function majSouches(p: Partie): void {
 }
 
 export const joursRestants = (p: Partie): number => Math.min(p.jours, joursMax(p));
+
+/** Prix de revient du raisin (€/kg) : coût de la vigne de l'année (travaux, jours valorisés, fermage) + travaux d'automne à venir, divisé par la récolte. */
+export function coutRaisinKg(p: Partie): number {
+  const ex = exploitees(p);
+  const kg = ex.reduce((s, x) => s + (x.recolteKg ?? estimationRecolte(p, x)), 0);
+  const automne = ex.reduce((s, x) => s + x.ha * 1800, 0) * 0; // labour et buttage sont comptés l'année suivante
+  const fermage = p.parcelles.filter((x) => x.statut === 'louee').length * p.params.charges.fermageAn;
+  return kg > 0 ? (p.coutVigneAn + fermage + automne) / kg : 0;
+}

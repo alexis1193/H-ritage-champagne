@@ -27,6 +27,15 @@ Gain du passif : environ 15 000 € de patrimoine par an à partir de l'an 4 (r�
 
 Inchangés : prix des investissements, charges de personnel, fermage, emprunt, météo, coûts des travaux, prix du raisin, clients.
 
+## Prix de revient (ajouté à la demande d'Alexis)
+Ordres de grandeur d'une partie « prudente » (2 ha, équipe + jours, sans cuverie ni pressoir) :
+- coût direct d'une bouteille : **≈ 5,8 €** (raisin ≈ 3 €, pressurage et façon ≈ 1,5 €, tirage 1,80 €, dégorgement 1,10 €, remuage) ;
+- frais fixes par bouteille : **≈ 4,9 €** (72 000 € par an répartis sur 21 t de raisin) ;
+- coût complet : **≈ 10,7 €** ; raisin vendu au négoce : **≈ 11,5 € l'équivalent d'une bouteille** ;
+- prix conseillé : **≈ 23 €** ; prix public de départ : 26 €.
+Conséquence : à 20 € la bouteille rapporte ≈ 9 € de marge sur le coût complet, mais seulement ≈ 5 € de plus que de vendre le raisin (20 − 3 − 11,5 − ...). Transformer reste rentable, sans être un cadeau : c'est le sens de l'objectif « serré puis récompensé ».
+L'équilibrage des 4 profils n'a pas changé (les bots refusent seulement les offres sous le coût, il n'y en avait pas).
+
 ## Points d'attention (à discuter)
 - **L'objectif 6 (une année ne se finit pas en moins de 30 minutes)** est une règle de rythme de l'interface (étape 3), pas de la simulation. La simulation compte 40 à 60 décisions par an pour un joueur actif ; le reste du temps vient du résumé mensuel, des déplacements et de la lecture. À garantir à l'étape 3 (résumé de fin de mois toujours affiché, pas de saut automatique).
 - **Le prudent dépasse le passif dès l'an 1 en patrimoine**, pas seulement dès l'an 4 : la cuvée du père (3 000 L) et la marque rapportent tôt. Sa trésorerie, elle, reste plus basse que celle du passif en an 1 (47 000 € contre 92 000 €). L'objectif « dès l'an 4 » est respecté, mais les deux premières années sont plus faciles qu'annoncé si le joueur crée sa marque tout de suite.
