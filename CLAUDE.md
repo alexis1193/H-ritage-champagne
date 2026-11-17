@@ -21,6 +21,9 @@ Utilisateur : Alexis, non développeur, travaille depuis son téléphone. Expliq
 - Deuxième carte prévue : Épernay (`cartes/epernay.json`, `?carte=epernay`), mode d'emploi dans `cartes/README.md`.
 - Ne jamais committer `donnees-brutes/` (cache de l'import). Import : réseau limité aux domaines autorisés (data.geopf.fr, ambientcg.com...).
 
+## Simulation (étape 2)
+- Règles dans `src/sim/` (TypeScript pur), chiffres dans `src/data/*.json`. `npm run simuler -- [parties] [années]` rejoue des parties automatiques (4 profils) ; `npm test` contient les tests de chaque règle et les gardiens d'équilibrage. Voir `docs/EQUILIBRAGE.md` pour ce qui a été réglé et pourquoi.
+
 ## Commandes
 - `npm run captures` : captures Playwright (après `npm run build`) dans `captures/`, à regarder une par une. Navigateur préinstallé utilisé via /opt/pw-browsers/chromium (ne pas réinstaller Playwright). Le FPS mesuré en rendu logiciel n est pas représentatif d un téléphone.
 - Options d adresse du jeu : `?debug` (compteur d images/s), `?mois=0..11` (saison), `?qualite=basse|moyenne|haute`, `?fixe` (désactive la qualité adaptative, utilisé par les captures).

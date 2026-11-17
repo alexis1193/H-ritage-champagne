@@ -1,0 +1,11 @@
+[
+  { "id": "taille", "nom": "Taille", "mois": [0, 1, 2], "echeance": 2, "joursHa": 5, "equipeHa": 3500, "oubli": { "recolte": 0.7, "qualite": -5 } },
+  { "id": "liage", "nom": "Liage", "mois": [2, 3], "echeance": 3, "joursHa": 2, "equipeHa": 1200, "oubli": { "sante": -6 } },
+  { "id": "protection", "nom": "Protection du vignoble", "mois": [3, 4, 5, 6, 7], "echeance": -1, "joursHa": 1, "equipeHa": 600, "oubli": {} },
+  { "id": "ebourgeonnage", "nom": "Ébourgeonnage", "mois": [4], "echeance": 4, "joursHa": 3, "equipeHa": 1800, "oubli": { "qualite": -4, "sante": -5 } },
+  { "id": "palissage", "nom": "Palissage", "mois": [5, 6], "echeance": 6, "joursHa": 3, "equipeHa": 1800, "oubli": { "sante": -8, "qualite": -2 } },
+  { "id": "rognage", "nom": "Rognage", "mois": [6], "echeance": 6, "joursHa": 1, "equipeHa": 700, "oubli": { "qualite": -2 } },
+  { "id": "vendanges", "nom": "Vendanges", "mois": [8], "echeance": 8, "joursHa": 1, "equipeKg": 0.9, "oubli": { "perte": true } },
+  { "id": "labour", "nom": "Labour", "mois": [9], "echeance": 9, "joursHa": 2, "equipeHa": 900, "oubli": { "sante": -4 } },
+  { "id": "buttage", "nom": "Buttage", "mois": [10], "echeance": 10, "joursHa": 2, "equipeHa": 900, "oubli": { "sante": -4 } }
+]

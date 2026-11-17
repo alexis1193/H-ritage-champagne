@@ -1,0 +1,12 @@
+[
+  { "id": "caviste_bruxelles", "nom": "Caviste à Bruxelles", "reputationMin": 0, "prix": 19, "qteMin": 120, "qteMax": 400, "dosages": ["brut"], "mois": null, "qualiteMin": null, "reputation": 2 },
+  { "id": "patissier_reims", "nom": "Pâtissier de Reims", "reputationMin": 8, "prix": 21, "qteMin": 60, "qteMax": 150, "dosages": ["demi-sec"], "mois": null, "qualiteMin": null, "reputation": 1 },
+  { "id": "mariages", "nom": "Organisatrice de mariages", "reputationMin": 10, "prix": 21, "qteMin": 150, "qteMax": 400, "dosages": ["brut"], "mois": [2, 3, 4, 5, 6, 7], "qualiteMin": null, "reputation": 1 },
+  { "id": "centrale", "nom": "Centrale d'achat de supermarchés", "reputationMin": 8, "prix": 13.5, "qteMin": 1500, "qteMax": 4000, "dosages": null, "mois": null, "qualiteMin": null, "reputation": -4 },
+  { "id": "comite_entreprise", "nom": "Comité d'entreprise", "reputationMin": 15, "prix": 19, "qteMin": 300, "qteMax": 900, "dosages": null, "mois": [8, 9, 10, 11], "qualiteMin": null, "reputation": 1 },
+  { "id": "cavistes_france", "nom": "Réseau de cavistes en France", "reputationMin": 22, "prix": 18.5, "qteMin": 400, "qteMax": 1200, "dosages": ["brut"], "mois": null, "qualiteMin": null, "reputation": 3 },
+  { "id": "restaurant_etoile", "nom": "Restaurant étoilé à Reims", "reputationMin": 28, "prix": 31, "qteMin": 60, "qteMax": 180, "dosages": ["extra brut"], "mois": null, "qualiteMin": 64, "reputation": 4 },
+  { "id": "londres", "nom": "Importateur à Londres", "reputationMin": 35, "prix": 20, "qteMin": 600, "qteMax": 1500, "dosages": ["brut"], "mois": null, "qualiteMin": null, "reputation": 3 },
+  { "id": "tokyo", "nom": "Importateur à Tokyo", "reputationMin": 45, "prix": 25, "qteMin": 300, "qteMax": 900, "dosages": ["extra brut"], "mois": null, "qualiteMin": 68, "reputation": 4 },
+  { "id": "palace", "nom": "Palace parisien", "reputationMin": 60, "prix": 46, "qteMin": 60, "qteMax": 200, "dosages": null, "mois": null, "qualiteMin": 78, "reputation": 6 }
+]

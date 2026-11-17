@@ -146,7 +146,7 @@ Chaque travail se fait soi-même (en jours) ou par une équipe (en euros). Une p
 | Rosé d'assemblage | Au moins 15 % de pinot noir (vin rouge) | 15 mois | x 1,15 |
 | Millésimé | Une seule année jugée exceptionnelle, sans réserve | 36 mois | x 1,35 |
 
-- **Dégorgement et dosage** : 1,10 € par bouteille. Remuage à la main : 1 jour pour 800 bouteilles ; avec gyropalettes : 0,15 € par bouteille et aucun jour. Chaque tranche de 6 mois au-delà du minimum donne +2 de qualité (maximum +8).
+- **Dégorgement et dosage** : 1,10 € par bouteille. Remuage à la main : 1 jour pour 800 bouteilles ; avec gyropalettes : 0,15 € par bouteille et aucun jour. Chaque tranche de 6 mois au-delà du minimum donne +2 de qualité (maximum +8). *Équilibrage (étape 2) : le dégorgement est possible d'avril à décembre, pour que la cuvée du père (tirée en janvier de l'an 1) puisse être vendue vers le mois 16.*
 - **Sept dosages** : brut nature, extra brut, brut, extra dry, sec, demi-sec, doux. Un brut nature de qualité sous 65 perd 4 points.
 
 ### Commerce
@@ -164,8 +164,8 @@ Chaque travail se fait soi-même (en jours) ou par une équipe (en euros). Une p
 | Importateur à Tokyo | 45 | 25 € | 300 à 900 | Extra brut, qualité 68+ | +4 |
 | Palace parisien | 60 | 46 € | 60 à 200 | Qualité 78+ | +6 |
 
-- Les offres n'arrivent qu'avec une marque déposée (statut RM), 1 à 3 par mois, valables 2 mois. Prix final = prix × (0,75 + qualité / 200) × bonus de cuvée.
-- **Vente directe** : le joueur fixe son prix public (14 à 60 €). Demande du mois = base × saison × (26 / prix)^1,8 × (0,7 + qualité moyenne / 200). Base = 30 sans marque, sinon 50 + 10 × réputation, +140 avec la boutique en ligne, +260 avec le caveau.
+- Les offres n'arrivent qu'avec une marque déposée (statut RM), 0 à 2 par mois (au lieu de 1 à 3), valables 2 mois, une seule offre ouverte par client à la fois. Prix final = prix × (0,75 + qualité / 200) × bonus de cuvée.
+- **Vente directe** : le joueur fixe son prix public (14 à 60 €). Demande du mois = base × saison × (26 / prix)^1,8 × (0,7 + qualité moyenne / 200). Base = 30 sans marque, sinon 30 + 6 × réputation (au lieu de 50 + 10 ×), +140 avec la boutique en ligne, +260 avec le caveau.
 - **Contrat raisins** : la Maison Delaunay propose un prix garanti jusqu'en juillet (7,00 à 7,90 €/kg). Elle rachète aussi les bouteilles sur lattes à 11 € × facteur qualité, sans réputation pour le joueur.
 - **Concours** : inscription en mars ou avril (400 €). En mai : or si qualité 75+ (+8 de réputation), argent si 68+ (+4).
 
@@ -191,10 +191,12 @@ Le jeu doit être serré les deux premières années, puis récompenser le joueu
 | Poste | Montant |
 | --- | --- |
 | Rémunération du joueur | 2 000 € par mois |
+| Frais généraux (assurances, cotisations, comptable, matériel, carburant) — ajouté à l'étape 2 | 4 000 € par mois |
+| Faillite | trésorerie sous −50 000 € à la fin d'un mois |
 | Chef de culture (+6 jours par mois) | 3 200 € par mois |
 | Fermage des Sellettes | 14 000 € par an |
 | Emprunt | 4,5 % par an, 10 % du capital remboursé par an, plafond 120 000 € + 300 000 € par ha possédé |
-| Impôts et cotisations | 25 % du résultat annuel positif |
+| Impôts et cotisations | 25 % du résultat annuel positif, payés par acomptes trimestriels (mars, juin, septembre, décembre), l'excédent est remboursé en décembre |
 | Marque (statut RM) | 9 000 € |
 | Boutique en ligne | 6 000 € |
 | Caveau de dégustation | 70 000 € |
@@ -230,9 +232,9 @@ Un millésime est déclaré si le bonus de l'année atteint 6 ou si la qualité 
 
 ### Problèmes vus dans le prototype
 
-- Trésorerie trop tendue en janvier de l'an 2 : impôts et succession tombent ensemble le 31 décembre. Piste : impôts payés par trimestre.
-- La cave de 8 000 places bloque vite l'assemblage d'une deuxième cuvée. Piste : 12 000 places au départ, ou une alerte claire.
-- Les équipes coûtent cher par rapport aux jours : le joueur ne sait pas quand déléguer. Piste : afficher le coût d'un jour de travail.
+- Trésorerie trop tendue en janvier de l'an 2 : impôts et succession tombent ensemble le 31 décembre. **Réglé à l'étape 2 : impôts payés par acomptes trimestriels.**
+- La cave de 8 000 places bloque vite l'assemblage d'une deuxième cuvée. **Étape 2 : on garde 8 000 places, avec un message clair (« La cave manque de place ») et l'agrandissement à 35 000 € ; à vérifier sur téléphone.**
+- Les équipes coûtent cher par rapport aux jours : le joueur ne sait pas quand déléguer. **Étape 2 : la simulation fournit le coût d'un jour (salaire ÷ jours = 200 €) et le coût de l'équipe par jour pour chaque travail (ex. taille : 700 €/jour) ; l'écran les affichera à l'étape 3.**
 - Le passage du temps était trop rapide dans la version 2D : garder le rythme mois par mois.
 
 ## Contenu éducatif

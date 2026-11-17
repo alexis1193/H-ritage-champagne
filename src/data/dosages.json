@@ -1,0 +1,9 @@
+[
+  { "id": "brut nature", "nom": "Brut nature", "sucre": "0 à 3 g/L" },
+  { "id": "extra brut", "nom": "Extra brut", "sucre": "0 à 6 g/L" },
+  { "id": "brut", "nom": "Brut", "sucre": "moins de 12 g/L" },
+  { "id": "extra dry", "nom": "Extra dry", "sucre": "12 à 17 g/L" },
+  { "id": "sec", "nom": "Sec", "sucre": "17 à 32 g/L" },
+  { "id": "demi-sec", "nom": "Demi-sec", "sucre": "32 à 50 g/L" },
+  { "id": "doux", "nom": "Doux", "sucre": "plus de 50 g/L" }
+]

@@ -1,2 +1,10 @@
-// Simulation du jeu : TypeScript pur, sans Three.js ni DOM. Remplie à l'étape 2.
-export const VERSION_SIM = 0;
+export * from './types';
+export * from './params';
+export * from './partie';
+export * from './rng';
+export * from './vigne';
+export * from './vin';
+export * from './commerce';
+export * from './finance';
+export * from './mois';
+export * from './sauvegarde';

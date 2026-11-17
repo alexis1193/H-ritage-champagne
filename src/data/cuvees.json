@@ -1,0 +1,6 @@
+[
+  { "id": "brut_sans_annee", "nom": "Brut sans année", "minMois": 15, "prix": 1.0 },
+  { "id": "blanc_de_blancs", "nom": "Blanc de blancs", "minMois": 15, "prix": 1.1 },
+  { "id": "rose", "nom": "Rosé d'assemblage", "minMois": 15, "prix": 1.15 },
+  { "id": "millesime", "nom": "Millésimé", "minMois": 36, "prix": 1.35 }
+]
