@@ -10,6 +10,8 @@ export class Obstacles {
   private readonly polys: Poly[] = [];
   private readonly grille = new Map<number, number[]>();
   private readonly ronds: { x: number; z: number; r: number }[] = [];
+  /** Règle supplémentaire (rangs de vigne) : reçoit l'ancienne position et corrige la nouvelle. */
+  contrainte: ((ox: number, oz: number, p: { x: number; z: number }) => void) | null = null;
 
   constructor(d: DonneesCarte) {
     const ajouter = (p: number[], marge: number): void => {

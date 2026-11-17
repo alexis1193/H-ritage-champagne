@@ -29,8 +29,9 @@ Source : https://ambientcg.com — chaque matière, couleur + relief (normales),
 | pierre*.jpg | Rocks011 | pierre (abbatiale, soubassements) |
 | asphalte*.jpg | Asphalt031 | routes |
 | herbe*.jpg | Grass004 | herbe |
+| ecorce*.jpg | Bark012 | écorce des arbres |
 
-Textures générées par le programme (aucune licence à reprendre) : relief de l'eau et feuilles de vigne (`src/world/textures.ts`).
+Textures générées par le programme (aucune licence à reprendre) : relief de l'eau, feuilles de vigne, rameaux de feuillus et branches de résineux (`src/world/textures.ts`).
 
 ## Modèles 3D et sons
 Aucun pour l'instant (étape 7).

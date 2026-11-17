@@ -165,6 +165,7 @@ document.getElementById('chargement')?.classList.add('fini');
   allerA: (id: string) => { const l = LIEUX.find((x) => x.id === id); if (l) allerA(l); },
   etat: () => ({ x: joueur.x, z: joueur.z, fps, pause: ui.enPause, carte: CARTE.id }),
   placer: (x: number, z: number) => { joueur.placer(x, z); },
+  marcher: (dx: number, dz: number, secondes: number) => { for (let t = 0; t < secondes; t += 0.05) joueur.mettreAJour(0.05, dx, dz, monde.obstacles); return { x: joueur.x, z: joueur.z }; },
   mois: (m: number) => monde.mois(m),
   menu: () => ui.ouvrirMenu(),
   carte: () => ui.ouvrirCarte(),

@@ -103,3 +103,43 @@ export function textureFeuilles(): CanvasTexture {
   t.anisotropy = 4;
   return t;
 }
+
+/** Rameau de feuillu : branche fine portant des feuilles ovales nervurées, fond transparent (cartes de feuillage des arbres). */
+export function texturePousse(): CanvasTexture {
+  const S = 256;
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const c = cv.getContext('2d');
+  if (!c) throw new Error('canvas 2d indisponible');
+  const r = hasard(17);
+  c.strokeStyle = 'rgb(120,100,80)'; c.lineWidth = 3; c.beginPath(); c.moveTo(S / 2, S); c.quadraticCurveTo(S / 2 + 10, S / 2, S / 2, 8); c.stroke();
+  for (let k = 0; k < 46; k++) {
+    const t = r(); const y = S - 10 - t * (S - 30); const x = S / 2 + Math.sin(t * 3) * 8;
+    const side = k % 2 ? 1 : -1; const a = (side * (0.5 + r() * 0.9)) - Math.PI / 2; const L = 26 + r() * 22 * (1 - t * 0.5);
+    const g = 110 + Math.floor(r() * 110);
+    c.save(); c.translate(x, y); c.rotate(a);
+    c.fillStyle = `rgb(${g},${g},${g})`;
+    c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(L * 0.2, -L * 0.34, L * 0.8, -L * 0.3, L, 0); c.bezierCurveTo(L * 0.8, L * 0.3, L * 0.2, L * 0.34, 0, 0); c.fill();
+    c.strokeStyle = 'rgba(0,0,0,0.3)'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, 0); c.lineTo(L * 0.95, 0); c.stroke();
+    c.restore();
+  }
+  const t = new CanvasTexture(cv); t.colorSpace = SRGBColorSpace; t.anisotropy = 4; return t;
+}
+
+/** Branche de résineux : aiguilles fines serrées de part et d'autre d'une tige. */
+export function textureAiguilles(): CanvasTexture {
+  const W = 128; const H = 256;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  if (!c) throw new Error('canvas 2d indisponible');
+  const r = hasard(29);
+  c.strokeStyle = 'rgb(110,85,60)'; c.lineWidth = 3; c.beginPath(); c.moveTo(W / 2, H); c.lineTo(W / 2, 4); c.stroke();
+  for (let k = 0; k < 150; k++) {
+    const t = k / 150; const y = H - 6 - t * (H - 14); const L = (1 - t * 0.7) * (34 + r() * 14);
+    for (const s of [-1, 1]) {
+      const g = 90 + Math.floor(r() * 120);
+      c.strokeStyle = `rgb(${g},${g},${g})`; c.lineWidth = 1.6;
+      c.beginPath(); c.moveTo(W / 2, y); c.lineTo(W / 2 + s * L, y - L * 0.45 - r() * 4); c.stroke();
+    }
+  }
+  const t = new CanvasTexture(cv); t.colorSpace = SRGBColorSpace; t.anisotropy = 4; return t;
+}

@@ -44,6 +44,8 @@ export interface GestionVignes {
   mettreAJour: (x: number, z: number) => void;
   saison: (mois: number) => void;
   stats: () => { proches: number; moyens: number };
+  /** Empêche de piétiner la vigne : dans un rang, on ne circule que dans l'inter-rang. */
+  contraindre: (ox: number, oz: number, p: { x: number; z: number }) => void;
 }
 
 export function construireVignes(d: DonneesCarte, obst: Obstacles): GestionVignes {
@@ -230,8 +232,26 @@ export function construireVignes(d: DonneesCarte, obst: Obstacles): GestionVigne
     c.groupe.traverse((o) => { if ((o as InstancedMesh).isInstancedMesh) (o as InstancedMesh).dispose(); });
   };
 
+  const dansVigne = (x: number, z: number): boolean => {
+    const [i, j] = celluleDe(x, z);
+    for (const id of parCase.get(cle(i, j)) ?? []) { const p = polys[id]; if (x > p.minX && x < p.maxX && z > p.minZ && z < p.maxZ && dansPoly(x, z, p.pts)) return true; }
+    return false;
+  };
+  const contraindre = (ox: number, oz: number, p: { x: number; z: number }): void => {
+    if (!dansVigne(p.x, p.z) || surRoute(p.x, p.z)) return;
+    const [i, j] = celluleDe(dansVigne(ox, oz) ? ox : p.x, dansVigne(ox, oz) ? oz : p.z);
+    const th = angleDeNiveau(niveauAngle(i, j)); const nx = -Math.sin(th); const nz = Math.cos(th);
+    const depart = dansVigne(ox, oz) && !surRoute(ox, oz) ? ox * nx + oz * nz : p.x * nx + p.z * nz;
+    const c = Math.round(depart / ESPACEMENT_RANGS) * ESPACEMENT_RANGS; // axe de l'inter-rang (les pieds sont à ±0,55 m)
+    const t = p.x * nx + p.z * nz;
+    const lim = ESPACEMENT_RANGS / 2 - 0.25;
+    const t2 = Math.min(c + lim, Math.max(c - lim, t));
+    p.x += (t2 - t) * nx; p.z += (t2 - t) * nz;
+  };
+
   return {
     groupe,
+    contraindre,
     saison: (m) => { mois = m; for (const c of chunks.values()) appliquer(c); },
     stats: () => ({ proches: [...chunks.values()].filter((c) => c.etat === 'proche').length, moyens: [...chunks.values()].filter((c) => c.etat === 'moyen').length }),
     mettreAJour: (px, pz) => {

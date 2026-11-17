@@ -47,8 +47,9 @@ export function construireMonde(scene: Scene, renderer: WebGLRenderer, d: Donnee
   scene.add(construireBatiments(d, m, aniso));
   const vignes = construireVignes(d, obstacles);
   scene.add(vignes.groupe);
-  const arbres = construireArbres(d, obstacles);
+  const arbres = construireArbres(d, obstacles, m);
   scene.add(arbres.groupe);
+  obstacles.contrainte = vignes.contraindre;
 
   // eau : plans plats posés au niveau des berges
   const eau = reliefEau();
@@ -73,6 +74,6 @@ export function construireMonde(scene: Scene, renderer: WebGLRenderer, d: Donnee
     obstacles,
     mois: (mm) => { sol.herbe.value.set(HERBE[mm]); vignes.saison(mm); arbres.saison(mm); },
     mettreAJour: (x, z, t) => { vignes.mettreAJour(x, z); arbres.mettreAJour(x, z); eau.offset.set(t * 0.0004, t * 0.0007); },
-    stats: () => { const s = vignes.stats(); return `vignes ${s.proches}+${s.moyens}`; },
+    stats: () => { const s = vignes.stats(); return `vignes ${s.proches}+${s.moyens} · ${arbres.nombre()} arbres`; },
   };
 }

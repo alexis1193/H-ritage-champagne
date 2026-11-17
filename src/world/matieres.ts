@@ -2,10 +2,10 @@ import { LinearMipmapLinearFilter, NoColorSpace, RepeatWrapping, SRGBColorSpace,
 
 /** Vraies textures photo (ambientCG, licence CC0), réduites à 512 px. Chaque matière : couleur + relief (normales). */
 export interface Matiere { couleur: Texture; relief: Texture }
-export type NomMatiere = 'platre' | 'tuile' | 'ardoise' | 'pierre' | 'asphalte' | 'herbe';
+export type NomMatiere = 'platre' | 'tuile' | 'ardoise' | 'pierre' | 'asphalte' | 'herbe' | 'ecorce';
 export type Matieres = Record<NomMatiere, Matiere>;
 
-const NOMS: NomMatiere[] = ['platre', 'tuile', 'ardoise', 'pierre', 'asphalte', 'herbe'];
+const NOMS: NomMatiere[] = ['platre', 'tuile', 'ardoise', 'pierre', 'asphalte', 'herbe', 'ecorce'];
 
 export async function chargerMatieres(anisotropie: number): Promise<Matieres> {
   const base = import.meta.env.BASE_URL;
