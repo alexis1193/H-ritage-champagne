@@ -24,7 +24,11 @@ Utilisateur : Alexis, non développeur, travaille depuis son téléphone. Expliq
 ## Simulation (étape 2)
 - Règles dans `src/sim/` (TypeScript pur), chiffres dans `src/data/*.json`. `npm run simuler -- [parties] [années]` rejoue des parties automatiques (4 profils) ; `npm test` contient les tests de chaque règle et les gardiens d'équilibrage. Voir `docs/EQUILIBRAGE.md` pour ce qui a été réglé et pourquoi.
 
+## Interface de jeu (étape 3)
+- `src/jeu.ts` : partie en cours + sauvegarde automatique (localStorage). `src/panneaux.ts` : panneaux (parcelle, fin du mois, résumé, maison, sauvegarde) qui appellent les actions de `src/sim`. Le résumé de fin de mois s'affiche toujours (rythme). Textes dans `src/data/textes.json` (à relire par Alexis).
+- Décor lié à la partie : saison, givre, pluie/grêle selon les événements, cueilleurs en septembre, piquets colorés par statut de parcelle.
+
 ## Commandes
 - `npm run captures` : captures Playwright (après `npm run build`) dans `captures/`, à regarder une par une. Navigateur préinstallé utilisé via /opt/pw-browsers/chromium (ne pas réinstaller Playwright). Le FPS mesuré en rendu logiciel n est pas représentatif d un téléphone.
-- Options d adresse du jeu : `?debug` (compteur d images/s), `?mois=0..11` (saison), `?qualite=basse|moyenne|haute`, `?fixe` (désactive la qualité adaptative, utilisé par les captures).
+- Options d adresse du jeu : `?debug` (compteur d images/s), `?mois=0..11` (avance la partie jusqu'à ce mois, sans rien faire), `?nouvelle` (ignore la sauvegarde), `?qualite=basse|moyenne|haute`, `?fixe` (désactive la qualité adaptative, utilisé par les captures).
 - `npm run dev` : serveur local · `npm run build` : build · `npm test` : tests Vitest · `npm run typecheck`

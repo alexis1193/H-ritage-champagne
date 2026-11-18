@@ -1,0 +1,38 @@
+{
+  "_note": "Textes du jeu à relire par Alexis avant publication. Les textes du Carnet du vigneron, du quiz et des dégustations seront ajoutés à l'étape 6.",
+  "mois": [
+    { "nom": "janvier", "titre": "La taille d'hiver", "texte": "Les vignes dorment, mais le travail ne s'arrête pas : la taille d'hiver commence. On choisit quels sarments garder, ce qui fixe la quantité de raisin de l'année. Vers le 22 janvier, les vignerons fêtent saint Vincent, leur patron." },
+    { "nom": "février", "titre": "La taille continue", "texte": "On taille rang après rang, souvent par temps froid. En cave, on goûte les vins clairs de la dernière récolte et les vins de réserve pour préparer les assemblages." },
+    { "nom": "mars", "titre": "Fin de taille, début du liage", "texte": "La taille s'achève et le liage commence : on attache les baguettes aux fils de fer. La sève monte, les bourgeons gonflent. C'est aussi le moment d'inscrire sa cuvée à un concours." },
+    { "nom": "avril", "titre": "Les bourgeons éclatent", "texte": "Les premières feuilles apparaissent. Les gelées de printemps sont la grande peur du vigneron : une seule nuit peut détruire une partie de la récolte. On commence à protéger la vigne des maladies." },
+    { "nom": "mai", "titre": "La vigne pousse vite", "texte": "On ébourgeonne : on retire les pousses inutiles pour aérer le feuillage et limiter le rendement. Le temps humide favorise le mildiou, d'où l'importance de la protection." },
+    { "nom": "juin", "titre": "La floraison", "texte": "La vigne fleurit. Une belle floraison prépare une belle récolte ; trop de pluie ou de froid peut provoquer la coulure. On palisse : on remonte les rameaux entre les fils." },
+    { "nom": "juillet", "titre": "Les grappes se forment", "texte": "Les grappes grossissent, encore vertes. On rogne les rameaux trop longs et on continue de protéger la vigne contre l'oïdium. Les orages de grêle sont le grand risque de l'été." },
+    { "nom": "août", "titre": "La véraison", "texte": "Les baies changent de couleur : c'est la véraison. En fin de mois, la filière annonce le ban des vendanges et le rendement autorisé de l'année." },
+    { "nom": "septembre", "titre": "Les vendanges", "texte": "En Champagne, on vendange à la main, en grappes entières, pour que le jus des raisins noirs reste blanc. Le raisin cueilli part au pressoir le jour même." },
+    { "nom": "octobre", "titre": "Les vins fermentent", "texte": "Les vendanges sont terminées. Les jus fermentent en cuve, puis la fermentation malolactique adoucit leur acidité. Dans les vignes, on laboure." },
+    { "nom": "novembre", "titre": "Le buttage", "texte": "On butte les pieds de vigne : on ramène de la terre au pied des ceps pour les protéger du gel. En cave, on prépare les bouteilles pour les fêtes de fin d'année." },
+    { "nom": "décembre", "titre": "Le repos de la vigne", "texte": "La vigne se repose. C'est la saison des fêtes, où se concentre une grande part des ventes. Le 31 décembre, on fait les comptes de l'année." }
+  ],
+  "travaux": {
+    "taille": { "nom": "Taille", "pourquoi": "On coupe les sarments de l'an dernier et on garde les meilleurs : la taille fixe le rendement et la concentration des raisins." },
+    "liage": { "nom": "Liage", "pourquoi": "On attache les baguettes aux fils de fer pour guider la pousse." },
+    "protection": { "nom": "Protection du vignoble", "pourquoi": "On protège la vigne du mildiou (chaleur humide) et de l'oïdium (chaleur sèche). Sans protection, le risque de maladie est neuf fois plus grand." },
+    "ebourgeonnage": { "nom": "Ébourgeonnage", "pourquoi": "On enlève les pousses inutiles pour aérer la vigne et limiter la quantité de raisin." },
+    "palissage": { "nom": "Palissage", "pourquoi": "On remonte les rameaux entre les fils pour garder un feuillage droit et aéré." },
+    "rognage": { "nom": "Rognage", "pourquoi": "On coupe le bout des rameaux trop longs pour concentrer la sève sur les grappes." },
+    "vendanges": { "nom": "Vendanges", "pourquoi": "Cueillette à la main, en grappes entières. Le raisin part au pressoir le jour même." },
+    "labour": { "nom": "Labour", "pourquoi": "On aère le sol et on retire les herbes pour que la vigne passe l'hiver en bonne santé." },
+    "buttage": { "nom": "Buttage", "pourquoi": "On ramène de la terre au pied des ceps pour les protéger du gel de l'hiver." }
+  },
+  "systemes": {
+    "guyot": { "nom": "Guyot", "note": "Une ou deux baguettes par pied. Accepté pour tous les cépages." },
+    "cordon": { "nom": "Cordon de Royat", "note": "Un bras horizontal portant des coursons. Idéal pour le pinot noir (+3 de qualité)." },
+    "chablis": { "nom": "Chablis", "note": "Plusieurs bras taillés en éventail. Idéal pour le chardonnay (+3 de qualité)." },
+    "vallee_marne": { "nom": "Vallée de la Marne", "note": "Réservé au meunier, pour lequel il est idéal (+3 de qualité)." }
+  },
+  "interface": {
+    "finMoisAvertissement": "Les jours non utilisés sont perdus, et les travaux oubliés ont des conséquences.",
+    "jourVaut": "Un jour de votre travail vaut {jour} €. Une équipe coûte {equipe} € par jour pour ce travail."
+  }
+}

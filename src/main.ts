@@ -9,6 +9,10 @@ import { Interface } from './ui';
 import { DIRECTION_SOLEIL as DIR } from './world/ciel';
 import { CARTE, CARTE_PAR_DEFAUT, cartesDisponibles, chargerCarte, installerCarte } from './cartes/chargeur';
 import { chargerMatieres } from './world/matieres';
+import { Jeu } from './jeu';
+import { afficherResume, dateCourte, panneauFinDuMois, panneauIntro, panneauMaison, panneauParcelle, panneauSauvegarde, type Contexte } from './panneaux';
+import { exploitees, finDuMois, moisCourant } from './sim';
+import type { Resume } from './sim';
 
 const canvas = document.getElementById('monde') as HTMLCanvasElement;
 const params = new URLSearchParams(location.search);
@@ -39,8 +43,6 @@ const matieres = await chargerMatieres(Math.min(8, renderer.capabilities.getMaxA
 const scene = new Scene();
 const camera = new PerspectiveCamera(55, 1, 0.5, 3500);
 const monde = construireMonde(scene, renderer, donnees, matieres, TAILLE_OMBRE);
-const moisInitial = Math.min(11, Math.max(0, Number(params.get('mois') ?? 0) || 0));
-monde.mois(moisInitial);
 const joueur = new Joueur();
 scene.add(joueur.groupe);
 { const dep = LIEUX.find((l) => l.id === 'maison') ?? LIEUX[0]; const p = pointArrivee(dep); joueur.placer(p.x, p.z); }
@@ -52,6 +54,54 @@ const controles = new Controles(
 );
 controles.yaw = 0; // caméra derrière le personnage, qui regarde vers le nord (coteau et forêt)
 const ui = new Interface(joueur);
+
+// --- la partie (simulation) branchée sur le monde
+const jeu = new Jeu(params.has('nouvelle'));
+const BASE_GIVRE = [0.14, 0.14, 0.06, 0, 0, 0, 0, 0, 0, 0, 0.06, 0.14];
+let minuteurMeteo = 0;
+
+function barre(): void { ui.majBarre(dateCourte(jeu.partie), jeu.partie.jours, jeu.partie.tresorerie); }
+/** Met le décor en accord avec la partie : saison, givre, cueilleurs de septembre, piquets des parcelles. */
+function decor(): void {
+  const p = jeu.partie; const m = moisCourant(p);
+  monde.mois(m);
+  monde.givre(BASE_GIVRE[m]);
+  monde.cueilleurs(m === 8 ? exploitees(p).map((x) => x.id) : []);
+  monde.statuts(Object.fromEntries(p.parcelles.map((x) => [x.id, x.statut])));
+}
+/** Les événements du mois se voient : gel, grêle, pluie (mildiou, coulure). */
+function meteoVisible(r: Resume): void {
+  const texte = r.evenements.join(' ');
+  clearTimeout(minuteurMeteo);
+  let fin = 0;
+  if (/Gel/.test(texte)) { monde.givre(0.5); fin = 25000; }
+  else if (/Grêle/.test(texte)) { monde.meteo('grele'); monde.luminosite(0.5); fin = 20000; }
+  else if (/Mildiou|Coulure/.test(texte)) { monde.meteo('pluie'); monde.luminosite(0.6); fin = 20000; }
+  if (fin) minuteurMeteo = window.setTimeout(() => { monde.meteo(null); monde.luminosite(1); decor(); }, fin);
+}
+const ctx: Contexte = {
+  jeu, ui,
+  apres: () => { jeu.sauver(); barre(); decor(); ui.rafraichirPanneau(); },
+  apresFinDuMois: (r) => { monde.meteo(null); monde.luminosite(1); decor(); barre(); meteoVisible(r); },
+};
+ui.entreesMenu = [
+  ['🗺️ Carte du village', () => { ui.fermerTout(); ui.ouvrirCarte(); }],
+  ['🏠 Tableau de bord', () => panneauMaison(ctx)],
+  ['🎯 Missions', null],
+  ['📖 Carnet du vigneron', null],
+  ['💾 Sauvegarde', () => panneauSauvegarde(ctx)],
+  ['⚙️ Réglages et son', null],
+];
+ui.surAction = (l) => {
+  if (l.parcelle) panneauParcelle(ctx, l.id);
+  else if (l.id === 'maison') panneauMaison(ctx);
+  else ui.notifier(`${l.nom} : cette activité arrive dans une prochaine étape.`);
+};
+ui.surFinMois = () => panneauFinDuMois(ctx);
+// Option de test : ?mois=5 avance la partie jusqu'à juin (sans rien faire).
+{ const cible = params.get('mois'); if (cible !== null) { let g = 0; while (moisCourant(jeu.partie) !== Number(cible) && g++ < 48) finDuMois(jeu.partie); } }
+decor(); barre();
+{ let vue = false; try { vue = localStorage.getItem('heritage-intro-vue') === '1'; } catch { /* ignore */ } if (!vue && jeu.partie.actions === 0 && jeu.partie.moisAbs === 0 && !params.has('fixe')) panneauIntro(ctx); }
 
 const recentrer = (): void => { controles.yaw = Math.atan2(-Math.sin(joueur.cap), -Math.cos(joueur.cap)); };
 controles.surRecentrer = recentrer;
@@ -137,7 +187,7 @@ function boucle(now: number): void {
   monde.soleil.target.position.copy(c);
   monde.soleil.position.copy(c).addScaledVector(DIR, 100);
   monde.soleil.target.updateMatrixWorld();
-  monde.mettreAJour(joueur.x, joueur.z, now);
+  monde.mettreAJour(joueur.x, joueur.z, now, camera.position, dt);
 
   renderer.render(scene, camera);
 
@@ -166,7 +216,16 @@ document.getElementById('chargement')?.classList.add('fini');
   etat: () => ({ x: joueur.x, z: joueur.z, fps, pause: ui.enPause, carte: CARTE.id }),
   placer: (x: number, z: number) => { joueur.placer(x, z); },
   marcher: (dx: number, dz: number, secondes: number) => { for (let t = 0; t < secondes; t += 0.05) joueur.mettreAJour(0.05, dx, dz, monde.obstacles); return { x: joueur.x, z: joueur.z }; },
-  mois: (m: number) => monde.mois(m),
+  visuel: (m: number) => monde.mois(m),
+  partie: () => jeu.partie,
+  avancer: (m: number) => { let g = 0; while (moisCourant(jeu.partie) !== m && g++ < 48) finDuMois(jeu.partie); decor(); barre(); },
+  parcelle: (id: string) => panneauParcelle(ctx, id),
+  finMois: () => panneauFinDuMois(ctx),
+  resume: (r: Resume) => afficherResume(ctx, r),
+  terminerMois: () => { const r = finDuMois(jeu.partie); jeu.sauver(); ctx.apresFinDuMois(r); afficherResume(ctx, r); },
+  sauvegarde: () => panneauSauvegarde(ctx),
+  intro: () => panneauIntro(ctx),
+  meteoTest: (texte: string) => meteoVisible({ evenements: [texte] } as Resume),
   menu: () => ui.ouvrirMenu(),
   carte: () => ui.ouvrirCarte(),
   fermer: () => ui.fermerTout(),

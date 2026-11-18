@@ -11,6 +11,10 @@ import { creerCiel, DIRECTION_SOLEIL } from './ciel';
 import { reliefEau } from './textures';
 import { Obstacles } from './collision';
 import type { Matieres } from './matieres';
+import { Meteo, type TypeMeteo } from './meteo';
+import { Cueilleurs } from './cueilleurs';
+import { Bornes } from './bornes';
+import type { Vector3 } from 'three';
 
 export interface Monde {
   soleil: DirectionalLight;
@@ -18,7 +22,17 @@ export interface Monde {
   /** Applique l'aspect d'un mois (0 = janvier … 11 = décembre). */
   mois: (m: number) => void;
   /** Charge/décharge ce qui est près du joueur (vignes, arbres) et anime l'eau. */
-  mettreAJour: (x: number, z: number, t: number) => void;
+  mettreAJour: (x: number, z: number, t: number, cam: Vector3, dt: number) => void;
+  /** Givre au sol (0 à 1). */
+  givre: (v: number) => void;
+  /** Pluie ou grêle visibles ; null = temps sec. */
+  meteo: (t: TypeMeteo) => void;
+  /** Luminosité générale (1 = beau temps ; moins = ciel couvert). */
+  luminosite: (k: number) => void;
+  /** Cueilleurs sur ces parcelles (septembre). */
+  cueilleurs: (ids: string[]) => void;
+  /** Couleur des piquets selon le statut de chaque parcelle. */
+  statuts: (s: Record<string, string>) => void;
   stats: () => string;
 }
 
@@ -52,6 +66,12 @@ export function construireMonde(scene: Scene, renderer: WebGLRenderer, d: Donnee
   obstacles.contrainte = vignes.contraindre;
 
   // eau : plans plats posés au niveau des berges
+  const meteo = new Meteo(); scene.add(meteo.groupe);
+  const cueilleurs = new Cueilleurs(); scene.add(cueilleurs.groupe);
+  const bornes = new Bornes(); scene.add(bornes.groupe);
+  const hemi = scene.children.find((o) => (o as HemisphereLight).isHemisphereLight) as HemisphereLight | undefined;
+  const baseSoleil = soleil.intensity; const baseHemi = hemi?.intensity ?? 0.3;
+
   const eau = reliefEau();
   eau.repeat.set(0.05, 0.05);
   const matEau = new MeshStandardMaterial({ color: '#3f6f80', roughness: 0.1, metalness: 0.1, normalMap: eau, envMapIntensity: 1.5 });
@@ -73,7 +93,16 @@ export function construireMonde(scene: Scene, renderer: WebGLRenderer, d: Donnee
     soleil,
     obstacles,
     mois: (mm) => { sol.herbe.value.set(HERBE[mm]); vignes.saison(mm); arbres.saison(mm); },
-    mettreAJour: (x, z, t) => { vignes.mettreAJour(x, z); arbres.mettreAJour(x, z); eau.offset.set(t * 0.0004, t * 0.0007); },
+    mettreAJour: (x, z, t, cam, dt) => { vignes.mettreAJour(x, z); arbres.mettreAJour(x, z); eau.offset.set(t * 0.0004, t * 0.0007); meteo.mettreAJour(dt, cam); cueilleurs.mettreAJour(t / 1000); },
+    givre: (v) => { sol.givre.value = v; },
+    meteo: (tp) => meteo.regler(tp),
+    luminosite: (k) => {
+      soleil.intensity = baseSoleil * k; if (hemi) hemi.intensity = baseHemi * (0.6 + 0.4 * k);
+      scene.environmentIntensity = 0.55 * (0.35 + 0.65 * k); // le ciel couvert assombrit aussi la lumière ambiante
+      if (scene.fog) (scene.fog as Fog).color.set(k < 1 ? '#8a9399' : BRUME);
+    },
+    cueilleurs: (ids) => cueilleurs.regler(ids),
+    statuts: (st) => bornes.majStatuts(st),
     stats: () => { const s = vignes.stats(); return `vignes ${s.proches}+${s.moyens} · ${arbres.nombre()} arbres`; },
   };
 }

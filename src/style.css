@@ -15,11 +15,14 @@ button:active { background:#4a382a; }
 #joystick.visible { opacity:1; }
 #pouce { position:absolute; left:35px; top:35px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.95); border:3px solid rgba(0,0,0,.55); }
 
-#barre { position:fixed; top:0; left:0; right:0; z-index:10; display:flex; align-items:center; gap:14px;
+#barre { position:fixed; top:0; left:0; right:0; z-index:10; display:flex; align-items:center; gap:10px;
   height:calc(var(--barre) + env(safe-area-inset-top)); padding:env(safe-area-inset-top) max(8px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
   background:rgba(43,33,24,.82); font-weight:700; font-size:15px; white-space:nowrap; }
 #barre span { flex:0 0 auto; }
 #tresorerie { margin-left:auto; color:var(--or); }
+#tresorerie.negatif { color:#ff9a8a; }
+#btn-fin { position:relative; height:var(--barre); min-height:0; border-radius:8px; padding:0 10px; font-size:15px; background:#8f2b2b; border-color:var(--creme); }
+#btn-fin::after { content:""; position:absolute; inset:-2px; }
 #btn-menu { position:relative; height:var(--barre); min-height:0; border-radius:8px; padding:0 12px; font-size:20px; }
 #btn-menu::after { content:""; position:absolute; inset:-2px; }
 
@@ -48,7 +51,7 @@ button:active { background:#4a382a; }
 #panneau-corps button { text-align:left; }
 #panneau-corps p { margin:2px 0; font-size:15px; opacity:.9; }
 @media (orientation: landscape) {
-  #panneau { top:0; bottom:0; right:0; width:40%; min-width:260px; padding-top:calc(12px + env(safe-area-inset-top)); border-width:0 0 0 2px; }
+  #panneau { top:calc(var(--barre) + env(safe-area-inset-top)); bottom:0; right:0; width:40%; min-width:260px; padding-top:10px; border-width:2px 0 0 2px; }
   #carte { inset:0; border-width:0; padding-top:calc(12px + env(safe-area-inset-top)); }
   #carte-corps { display:flex; gap:14px; align-items:flex-start; }
   #carte-lieux { flex:1; }
@@ -68,3 +71,32 @@ button:active { background:#4a382a; }
 #chargement small { font:500 17px system-ui; margin-top:10px; }
 #chargement.fini { opacity:0; pointer-events:none; }
 #fps { position:fixed; left:6px; bottom:6px; z-index:30; font:12px monospace; background:#000a; padding:2px 6px; border-radius:4px; }
+
+/* contenu des panneaux de jeu */
+#panneau-corps h3 { margin:12px 0 2px; font-size:16px; color:var(--or); }
+#panneau-corps h4 { margin:0; font-size:16px; }
+#panneau-corps .sous-titre { opacity:.85; margin:0 0 6px; }
+#panneau-corps .aide { font-size:15px; opacity:.8; margin:2px 0; }
+#panneau-corps .pourquoi { font-size:15px; margin:2px 0 8px; opacity:.95; }
+#panneau-corps .fait { color:#9fe0a2; }
+#panneau-corps .mauvais, #panneau-corps b.mauvais { color:#ff9a8a; }
+#panneau-corps b.bon { color:#9fe0a2; }
+#panneau-corps .texte-mois { font-size:16px; line-height:1.5; }
+#panneau-corps .liste { margin:2px 0; padding-left:20px; font-size:15px; }
+#panneau-corps .liste li { margin:3px 0; }
+#panneau-corps .liste li.urgent { color:#ffd27a; }
+#panneau-corps .travail { border:1px solid rgba(217,183,94,.5); border-radius:12px; padding:10px; background:rgba(255,255,255,.04); }
+#panneau-corps .boutons-ligne { display:flex; gap:8px; flex-wrap:wrap; }
+#panneau-corps .boutons-ligne button { flex:1 1 130px; text-align:center; }
+#panneau-corps .systemes { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0; }
+#panneau-corps .systemes button { flex:1 1 120px; text-align:center; font-size:15px; padding:0 6px; }
+#panneau-corps button.choisi { background:var(--or); color:#2b2118; }
+#panneau-corps button.primaire { background:#8f2b2b; border-color:var(--creme); text-align:center; }
+#panneau-corps button:disabled { opacity:.45; }
+#panneau-corps .ligne { display:flex; justify-content:space-between; gap:10px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.12); font-size:15px; }
+#panneau-corps .ligne.total { border-top:2px solid var(--or); border-bottom:0; font-size:16px; margin-top:6px; }
+#panneau-corps .jauge { display:grid; grid-template-columns:132px 1fr 34px; align-items:center; gap:8px; font-size:15px; margin:3px 0; }
+#panneau-corps .jauge-barre { height:12px; background:rgba(255,255,255,.15); border-radius:6px; overflow:hidden; }
+#panneau-corps .jauge-barre i { display:block; height:100%; }
+#panneau-corps .jauge-barre i.bon { background:#6ab04c; } #panneau-corps .jauge-barre i.moyen { background:#e1b12c; } #panneau-corps .jauge-barre i.bas { background:#e55039; }
+#panneau-corps textarea.code { width:100%; font:13px monospace; background:#1d150f; color:var(--creme); border:1px solid var(--or); border-radius:8px; padding:8px; }

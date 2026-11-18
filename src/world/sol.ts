@@ -16,7 +16,7 @@ import type { Matieres } from './matieres';
 const W = 1280;
 const FORET = new Set(['b', 'f', 'm', 'k', 'p', 'l', 'o']);
 
-export interface Sol { mesh: Mesh; herbe: { value: Color } }
+export interface Sol { mesh: Mesh; herbe: { value: Color }; givre: { value: number } }
 
 function moyenneLineaire(t: Texture): number {
   const img = t.image as CanvasImageSource & { width: number; height: number };
@@ -127,16 +127,17 @@ export function construireSol(d: DonneesCarte, m: Matieres, anisotropie: number)
   relief.needsUpdate = true;
   relief.repeat.set(lx / 6, lz / 6);
   const herbe = { value: new Color('#8d9262') };
+  const givre = { value: 0 };
   const mat = new MeshStandardMaterial({ map: colTex, normalMap: relief, normalScale: new Vector2(0.8, 0.8), roughness: 0.95, metalness: 0 });
   const mG = moyenneLineaire(m.herbe.couleur); const mN = moyenneLineaire(m.platre.couleur); const mA = moyenneLineaire(m.asphalte.couleur);
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, {
       masque: { value: masque }, herbeTex: { value: m.herbe.couleur }, craieTex: { value: m.platre.couleur }, asphalteTex: { value: m.asphalte.couleur },
-      herbe, norme: { value: [1 / mG, 1 / mN, 1 / mA] }, espacement: { value: ESPACEMENT_RANGS },
+      herbe, givre, norme: { value: [1 / mG, 1 / mN, 1 / mA] }, espacement: { value: ESPACEMENT_RANGS },
     });
     sh.vertexShader = sh.vertexShader.replace('void main() {', 'varying vec2 vWxz;\nvoid main() {').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWxz = position.xz;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('void main() {', 'varying vec2 vWxz; uniform sampler2D masque; uniform sampler2D herbeTex; uniform sampler2D craieTex; uniform sampler2D asphalteTex; uniform vec3 herbe; uniform vec3 norme; uniform float espacement;\nvoid main() {')
+      .replace('void main() {', 'varying vec2 vWxz; uniform sampler2D masque; uniform sampler2D herbeTex; uniform sampler2D craieTex; uniform sampler2D asphalteTex; uniform vec3 herbe; uniform vec3 norme; uniform float espacement; uniform float givre;\nvoid main() {')
       .replace('#include <map_fragment>', `
         vec4 sampledDiffuseColor = texture2D( map, vMapUv );
         vec4 mk = texture2D( masque, vMapUv );
@@ -159,6 +160,7 @@ export function construireSol(d: DonneesCarte, m: Matieres, anisotropie: number)
           herbeMix *= 1.0 - mix( 0.36, strip, fade );
         }
         diffuseColor.rgb *= mix( nu, herbeCol, herbeMix ) * mk.g;
+        diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.82, 0.88, 0.94 ), givre * ( 0.3 + 0.45 * mk.r ) );
       `);
   };
 
@@ -170,7 +172,7 @@ export function construireSol(d: DonneesCarte, m: Matieres, anisotropie: number)
   geo.computeVertexNormals();
   const mesh = new Mesh(geo, mat);
   mesh.receiveShadow = true;
-  return { mesh, herbe };
+  return { mesh, herbe, givre };
 }
 
 export { celluleDe };

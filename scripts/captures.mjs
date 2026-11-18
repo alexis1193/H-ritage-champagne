@@ -21,7 +21,7 @@ try {
       const erreurs = [];
       page.on('pageerror', (e) => erreurs.push(e.message));
       page.on('console', (m) => { if (m.type() === 'error') erreurs.push(m.text()); });
-      await page.goto('http://localhost:4173/?debug&fixe', { waitUntil: 'load' });
+      await page.goto('http://localhost:4173/?debug&fixe&nouvelle', { waitUntil: 'load' });
       await page.waitForFunction(() => window.__jeu, null, { timeout: 20000 });
       await page.waitForTimeout(800);
       const p = (s) => `${sortie}/${w}x${h}-${nom}-${s}.png`;
@@ -48,10 +48,19 @@ try {
       await page.screenshot({ path: p('5-carte') });
       await page.evaluate(() => window.__jeu.fermer());
       for (const [mois, nomMois, lieu] of [[5, 'ete', 'parcelle2'], [8, 'septembre', 'parcelle1'], [9, 'automne', 'parcelle4']]) {
-        await page.evaluate(([m, l]) => { window.__jeu.mois(m); window.__jeu.allerA(l); }, [mois, lieu]);
+        await page.evaluate(([m, l]) => { window.__jeu.visuel(m); window.__jeu.allerA(l); }, [mois, lieu]);
         await page.waitForTimeout(600);
         await page.screenshot({ path: p(`6-${nomMois}`) });
       }
+
+      // étape 3 : panneau de parcelle, fin du mois, résumé mensuel
+      await page.evaluate(() => { window.__jeu.visuel(0); window.__jeu.allerA('parcelle2'); window.__jeu.parcelle('parcelle2'); });
+      await page.waitForTimeout(500); await page.screenshot({ path: p('7-parcelle') });
+      await page.evaluate(() => { window.__jeu.fermer(); window.__jeu.finMois(); });
+      await page.waitForTimeout(400); await page.screenshot({ path: p('8-fin-du-mois') });
+      await page.evaluate(() => { window.__jeu.fermer(); window.__jeu.terminerMois(); });
+      await page.waitForTimeout(500); await page.screenshot({ path: p('9-resume') });
+      await page.evaluate(() => window.__jeu.fermer());
 
       // mesures de mise en page : surface du monde visible, tailles minimales
       const m = await page.evaluate(() => {

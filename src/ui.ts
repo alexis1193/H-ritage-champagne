@@ -12,7 +12,7 @@ const $ = <T extends HTMLElement>(id: string): T => {
 export class Interface {
   private readonly mini = $<HTMLCanvasElement>('minicarte');
   private readonly carteCanvas = $<HTMLCanvasElement>('carte-canvas');
-  private readonly panneau = $('panneau');
+  private readonly elPanneau = $('panneau');
   private readonly carte = $('carte');
   private readonly action = $('action-conteneur');
   private lieuAction: Lieu | null = null;
@@ -21,15 +21,20 @@ export class Interface {
   enPause = false;
   surAller: ((l: Lieu) => void) | null = null;
   surOuverture: (() => void) | null = null;
+  /** Le joueur appuie sur le bouton d'action près d'un lieu. */
+  surAction: ((l: Lieu) => void) | null = null;
+  surFinMois: (() => void) | null = null;
+  /** Entrées du menu (texte, action ; null = bientôt). */
+  entreesMenu: [string, (() => void) | null][] = [];
+  private rendu: ((corps: HTMLElement) => void) | null = null;
 
   constructor(private readonly joueur: { x: number; z: number; cap: number }) {
     $('btn-menu').addEventListener('click', () => this.ouvrirMenu());
     $('panneau-fermer').addEventListener('click', () => this.fermerTout());
     $('carte-fermer').addEventListener('click', () => this.fermerTout());
     this.mini.addEventListener('click', () => this.ouvrirCarte());
-    $('action').addEventListener('click', () => {
-      if (this.lieuAction) this.notifier(`${this.lieuAction.nom} : cette activité arrive dans une prochaine étape.`);
-    });
+    $('action').addEventListener('click', () => { if (this.lieuAction) this.surAction?.(this.lieuAction); });
+    $('btn-fin').addEventListener('click', () => this.surFinMois?.());
     const liste = $('carte-lieux');
     for (const l of LIEUX) {
       const b = document.createElement('button');
@@ -54,27 +59,47 @@ export class Interface {
 
   private ouvrir(): void { this.enPause = true; this.surOuverture?.(); }
 
-  ouvrirMenu(): void {
-    this.fermerTout();
+  /** Ouvre un panneau (latéral en paysage, tiroir en portrait) ; le jeu est en pause. `rendu` peut être rappelé pour rafraîchir. */
+  panneau(titre: string, rendu: (corps: HTMLElement) => void): void {
+    this.carte.hidden = true;
     this.ouvrir();
+    this.rendu = rendu;
+    $('panneau-titre').textContent = titre;
+    this.elPanneau.hidden = false;
+    this.dessinerPanneau();
+  }
+
+  private dessinerPanneau(): void {
     const corps = $('panneau-corps');
+    const haut = this.elPanneau.scrollTop;
     corps.replaceChildren();
-    const entrees: [string, (() => void) | null][] = [
-      ['🗺️ Carte du village', () => { this.fermerTout(); this.ouvrirCarte(); }],
-      ['🎯 Missions', null],
-      ['📖 Carnet du vigneron', null],
-      ['⚙️ Réglages et son', null],
-    ];
-    for (const [t, fn] of entrees) {
-      const b = document.createElement('button');
-      b.textContent = t;
-      b.addEventListener('click', fn ?? (() => this.notifier(`${t.slice(3)} : bientôt disponible.`)));
-      corps.appendChild(b);
-    }
-    const p = document.createElement('p');
-    p.textContent = 'Le jeu est en pause tant que ce panneau est ouvert.';
-    corps.appendChild(p);
-    this.panneau.hidden = false;
+    this.rendu?.(corps);
+    this.elPanneau.scrollTop = haut;
+  }
+
+  rafraichirPanneau(): void { if (!this.elPanneau.hidden) this.dessinerPanneau(); }
+
+  /** Barre du haut : date, jours de travail restants, trésorerie. */
+  majBarre(date: string, jours: number, tresorerie: number): void {
+    $('date').textContent = date;
+    $('jours').textContent = `⚒ ${String(jours).replace('.', ',')} j`;
+    const t = $('tresorerie');
+    t.textContent = `${Math.round(tresorerie).toLocaleString('fr-FR')} €`;
+    t.classList.toggle('negatif', tresorerie < 0);
+  }
+
+  ouvrirMenu(): void {
+    this.panneau('Menu', (corps) => {
+      for (const [t, fn] of this.entreesMenu) {
+        const b = document.createElement('button');
+        b.textContent = t;
+        b.addEventListener('click', fn ?? (() => this.notifier(`${t.slice(3)} : bientôt disponible.`)));
+        corps.appendChild(b);
+      }
+      const p = document.createElement('p');
+      p.textContent = 'Le jeu est en pause tant que ce panneau est ouvert.';
+      corps.appendChild(p);
+    });
   }
 
   ouvrirCarte(): void {
@@ -87,7 +112,8 @@ export class Interface {
   }
 
   fermerTout(): void {
-    this.panneau.hidden = true;
+    this.rendu = null;
+    this.elPanneau.hidden = true;
     this.carte.hidden = true;
     this.enPause = false;
   }
